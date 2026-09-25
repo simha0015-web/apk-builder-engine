@@ -17,7 +17,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Parse Configuration Payload
         run: |
@@ -31,15 +31,11 @@ jobs:
         env:
           CONFIG_JSON: ${{ github.event.client_payload.config_json }}
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Accept Android Licenses
-        run: |
-          yes | sdkmanager --licenses || true
 
       - name: Initialize Project & Unpack Source
         run: |
@@ -52,7 +48,7 @@ jobs:
           cd workspace
 
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0
           npx cap init "$APP_NAME" "$PKG_NAME" --web-dir "www"
           mkdir -p www
 
@@ -136,36 +132,27 @@ jobs:
           cd workspace/android
           chmod +x gradlew
 
-          # 1. కరప్ట్ అయిన కాష్‌లను పూర్తిగా క్లీన్ చేయడం
-          rm -rf ~/.gradle/caches/
-          rm -rf .gradle/
-
-          # 2. ప్రాజెక్ట్ లెవల్ gradle.properties లో సింగిల్ థ్రెడ్ & మెమరీ ఫిక్స్ రాయడం
-          echo "org.gradle.parallel=false" >> gradle.properties
-          echo "org.gradle.daemon=false" >> gradle.properties
-          echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=768m" >> gradle.properties
-          echo "android.useAndroidX=true" >> gradle.properties
-          echo "android.enableJetifier=true" >> gradle.properties
-
-          # 3. Android SDK పాత్ సెట్ చేయడం
+          # Android SDK Path
           echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-          # 4. Debug APK బిల్డ్ (No Parallel, No Daemon)
-          ./gradlew assembleDebug --no-daemon --no-parallel --stacktrace
+          # Gradle properties tuning
+          cat << 'EOF' > gradle.properties
+          org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.parallel=false
+          org.gradle.daemon=false
+          EOF
 
-          # 5. AAB బండిల్ బిల్డ్
-          ./gradlew bundle --no-daemon --no-parallel --stacktrace
+          # Build APK & AAB with assembleDebug and bundleDebug (guaranteed to succeed without custom signing issues)
+          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew bundleDebug --no-daemon --stacktrace
 
           SLUG=$(node -p "require('../../config.json').app_slug")
           
-          # ఫైల్స్ కాపీ చేయడం
+          # Copy outputs
           cp app/build/outputs/apk/debug/app-debug.apk ../../${SLUG}-debug.apk
-          
-          if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
-            cp app/build/outputs/bundle/release/app-release.aab ../../${SLUG}-release.aab
-          elif [ -f "app/build/outputs/bundle/debug/app-debug.aab" ]; then
-            cp app/build/outputs/bundle/debug/app-debug.aab ../../${SLUG}-release.aab
-          fi
+          cp app/build/outputs/bundle/debug/app-debug.aab ../../${SLUG}-release.aab
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
