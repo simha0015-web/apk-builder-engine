@@ -19,6 +19,18 @@ jobs:
         with:
           node-version: 18
 
+      - name: Parse Configuration Payload
+        run: |
+          node -e '
+            const fs = require("fs");
+            const config = JSON.parse(process.env.CONFIG_JSON);
+            fs.writeFileSync("config.json", JSON.stringify(config, null, 2));
+            console.log("App Name:", config.app_name);
+            console.log("Package:", config.package_name);
+          '
+        env:
+          CONFIG_JSON: ${{ github.event.client_payload.config_json }}
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -30,21 +42,24 @@ jobs:
 
       - name: Initialize Project & Unpack Source
         run: |
+          APP_NAME=$(node -p "require('./config.json').app_name")
+          PKG_NAME=$(node -p "require('./config.json').package_name")
+          SOURCE_TYPE=$(node -p "require('./config.json').source_type")
+
           mkdir -p workspace
           cd workspace
 
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "${{ github.event.client_payload.app_name }}" "${{ github.event.client_payload.package_name }}" --web-dir "www"
+          npx cap init "$APP_NAME" "$PKG_NAME" --web-dir "www"
           mkdir -p www
-
-          SOURCE_TYPE="${{ github.event.client_payload.source_type }}"
 
           if [ "$SOURCE_TYPE" = "zip" ]; then
             echo "${{ github.event.client_payload.zip_base64 }}" | base64 -d > project.zip
             unzip -o project.zip -d www/
           elif [ "$SOURCE_TYPE" = "url" ]; then
-            cat << 'EOF' > www/index.html
+            WEB_URL=$(node -p "require('../config.json').web_url")
+            cat << EOF > www/index.html
             <!DOCTYPE html>
             <html>
             <head>
@@ -52,12 +67,16 @@ jobs:
               <style>body,html,iframe{margin:0;padding:0;height:100%;width:100%;border:none;overflow:hidden;}</style>
             </head>
             <body>
-              <script>window.location.href = "${{ github.event.client_payload.web_url }}";</script>
+              <script>window.location.href = "$WEB_URL";</script>
             </body>
             </html>
           EOF
           elif [ "$SOURCE_TYPE" = "raw_html" ]; then
-            echo '${{ github.event.client_payload.html_content }}' > www/index.html
+            node -e "
+              const fs = require('fs');
+              const cfg = require('../config.json');
+              fs.writeFileSync('www/index.html', cfg.html_content);
+            "
           fi
 
           npx cap add android
@@ -82,7 +101,7 @@ jobs:
             const fs = require("fs");
             const manifestPath = "android/app/src/main/AndroidManifest.xml";
             let content = fs.readFileSync(manifestPath, "utf8");
-            const payload = ${{ toJson(github.event.client_payload) }};
+            const payload = require("../config.json");
             const p = payload.permissions || {};
 
             let perms = "";
@@ -116,7 +135,6 @@ jobs:
         run: |
           cd workspace/android
 
-          # Keystore Management
           KEYSTORE="release.jks"
           keytool -genkey -v -keystore $KEYSTORE -alias app-key -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass "buildsecret99" -keypass "buildsecret99" \
@@ -125,14 +143,15 @@ jobs:
           ./gradlew assembleDebug
           ./gradlew bundleRelease
 
-          cp app/build/outputs/apk/debug/app-debug.apk ../../${{ github.event.client_payload.app_slug }}-debug.apk
-          cp app/build/outputs/bundle/release/app-release.aab ../../${{ github.event.client_payload.app_slug }}-release.aab
+          SLUG=$(node -p "require('../../config.json').app_slug")
+          cp app/build/outputs/apk/debug/app-debug.apk ../../${SLUG}-debug.apk
+          cp app/build/outputs/bundle/release/app-release.aab ../../${SLUG}-release.aab
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "release-${{ github.event.client_payload.app_slug }}-v${{ github.event.client_payload.version_code }}"
-          name: "${{ github.event.client_payload.app_name }} v${{ github.event.client_payload.version_name }}"
+          tag_name: "release-${{ fromJson(github.event.client_payload.config_json).app_slug }}-v${{ fromJson(github.event.client_payload.config_json).version_code }}"
+          name: "${{ fromJson(github.event.client_payload.config_json).app_name }} v${{ fromJson(github.event.client_payload.config_json).version_name }}"
           files: |
             *-debug.apk
             *-release.aab
@@ -145,9 +164,11 @@ jobs:
           git config --global user.email "actions@github.com"
           git pull origin main || true
 
-          RELEASE_TAG="release-${{ github.event.client_payload.app_slug }}-v${{ github.event.client_payload.version_code }}"
-          APK_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${{ github.event.client_payload.app_slug }}-debug.apk"
-          AAB_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${{ github.event.client_payload.app_slug }}-release.aab"
+          SLUG=$(node -p "require('./config.json').app_slug")
+          VCODE=$(node -p "require('./config.json').version_code")
+          RELEASE_TAG="release-${SLUG}-v${VCODE}"
+          APK_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${SLUG}-debug.apk"
+          AAB_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${SLUG}-release.aab"
 
           node -e "
             const fs = require('fs');
@@ -156,7 +177,7 @@ jobs:
             if (fs.existsSync(file)) {
               try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch(e){}
             }
-            const payload = ${{ toJson(github.event.client_payload) }};
+            const payload = require('./config.json');
             const appIndex = data.findIndex(a => a.package_name === payload.package_name);
             
             const appDetails = {
@@ -180,5 +201,5 @@ jobs:
           "
 
           git add apps.json
-          git commit -m "Store binary metadata: ${{ github.event.client_payload.app_name }}" || echo "No changes"
+          git commit -m "Store binary metadata: $(node -p "require('./config.json').app_name")" || echo "No changes"
           git push origin main
