@@ -136,13 +136,17 @@ jobs:
           cd workspace/android
           chmod +x gradlew
 
-          KEYSTORE="release.jks"
-          keytool -genkey -v -keystore $KEYSTORE -alias app-key -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass "buildsecret99" -keypass "buildsecret99" \
-            -dname "CN=Builder, OU=Dev, O=App, L=Hyd, S=TS, C=IN"
+          # Gradle properties to avoid race condition/jar lock errors
+          mkdir -p ~/.gradle
+          echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
+          echo "org.gradle.parallel=false" >> ~/.gradle/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m" >> ~/.gradle/gradle.properties
 
-          ./gradlew assembleDebug
-          ./gradlew bundleRelease
+          # Build Debug APK with single process
+          ./gradlew assembleDebug --no-daemon --no-parallel --stacktrace
+
+          # Build Release AAB (Play Store)
+          ./gradlew bundleRelease --no-daemon --no-parallel --stacktrace
 
           SLUG=$(node -p "require('../../config.json').app_slug")
           cp app/build/outputs/apk/debug/app-debug.apk ../../${SLUG}-debug.apk
