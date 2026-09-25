@@ -82,17 +82,27 @@ jobs:
         run: |
           cd workspace
 
-          # Custom App Icon
+          # 1. Custom App Icon - Full Android Adaptive & Legacy Icon Replacement
           HAS_ICON=$(node -p "require('../config.json').has_custom_icon")
           if [ "$HAS_ICON" = "true" ] && [ -f "../build_cache/icon.png" ]; then
+            echo "Applying custom user icon across all mipmap folders..."
+            
+            # అన్ని mipmap డెన్సిటీలలోకి మీ ఐకాన్ కాపీ చేయడం
             for res in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
               mkdir -p android/app/src/main/res/mipmap-$res
               cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher.png
               cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher_round.png
+              cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher_foreground.png
             done
+
+            # Capacitor డిఫాల్ట్ Adaptive Icon XML ఫైల్స్ తొలగించడం (దీనివల్ల నేరుగా మీ PNG ఐకాన్ ఫోన్‌లో కనిపిస్తుంది)
+            rm -rf android/app/src/main/res/mipmap-anydpi-v26
+            mkdir -p android/app/src/main/res/drawable
+            cp ../build_cache/icon.png android/app/src/main/res/drawable/ic_launcher_background.png || true
+            cp ../build_cache/icon.png android/app/src/main/res/drawable/ic_launcher_foreground.png || true
           fi
 
-          # AndroidManifest Injection
+          # 2. AndroidManifest Permissions & Settings Injection
           node -e '
             const fs = require("fs");
             const manifestPath = "android/app/src/main/AndroidManifest.xml";
@@ -135,7 +145,7 @@ jobs:
           # 1. Signing Configuration Fix
           sed -i 's/buildTypes {/buildTypes {\n        release {\n            signingConfig signingConfigs.debug\n        }/' app/build.gradle
 
-          # 2. Kotlin Duplicate Class Fix (Native bash append - YAML-safe)
+          # 2. Kotlin Duplicate Class Fix
           cat << 'EOF' >> app/build.gradle
 
           configurations.all {
