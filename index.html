@@ -179,7 +179,6 @@
   let zipBase64 = "";
   let iconBase64 = "";
 
-  // Auto-detect GitHub username/repo from GitHub Pages URL
   function detectRepo() {
     const host = window.location.hostname;
     const path = window.location.pathname.replace(/^\/|\/$/g, '');
@@ -231,13 +230,13 @@
     let repo = detectRepo();
 
     if (!repo) {
-      repo = prompt("GitHub Repo పేరు నమోదు చేయండి (ఉదా: username/apk-builder):");
+      repo = prompt("GitHub Repo నమోదు చేయండి (ఉదా: username/apk-builder):");
       if (repo) localStorage.setItem('custom_gh_repo', repo);
       else return;
     }
 
     if (!token) {
-      alert("దయచేసి మీ GitHub PAT Token ఎంటర్ చేయండి!");
+      alert("దయచేసి మీ GitHub PAT Token నమోదు చేయండి!");
       return;
     }
 
@@ -254,7 +253,7 @@
       return;
     }
 
-    const payload = {
+    const appConfig = {
       app_name: name,
       app_slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       package_name: pkg,
@@ -263,8 +262,6 @@
       source_type: sourceType,
       web_url: document.getElementById('webUrl').value.trim(),
       html_content: document.getElementById('rawHtml').value,
-      zip_base64: zipBase64,
-      icon_base64: iconBase64,
       orientation: document.getElementById('orientation').value,
       cleartext: document.getElementById('cleartext').value === "true",
       fullscreen: document.getElementById('fullscreen').value === "true",
@@ -294,12 +291,16 @@
         },
         body: JSON.stringify({
           event_type: 'build_app',
-          client_payload: payload
+          client_payload: {
+            config_json: JSON.stringify(appConfig),
+            zip_base64: zipBase64,
+            icon_base64: iconBase64
+          }
         })
       });
 
       if (res.ok) {
-        alert("🎉 బిల్డ్ విజయవంతంగా ప్రారంభమైంది! 4-5 నిమిషాల్లో కింద లిస్ట్‌లో డౌన్‌లోడ్ లింక్స్ సిద్ధమవుతాయి.");
+        alert("🎉 బిల్డ్ ప్రారంభమైంది! 4-5 నిమిషాల్లో కింద లిస్ట్‌లో డౌన్‌లోడ్ లింక్స్ సిద్ధమవుతాయి.");
       } else {
         const err = await res.json();
         alert("బిల్డ్ విఫలమైంది: " + (err.message || "Token సరిచూసుకోండి"));
