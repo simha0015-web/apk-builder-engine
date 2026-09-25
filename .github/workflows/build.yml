@@ -136,21 +136,29 @@ jobs:
           cd workspace/android
           chmod +x gradlew
 
-          # Gradle properties to avoid race condition/jar lock errors
-          mkdir -p ~/.gradle
-          echo "org.gradle.daemon=false" >> ~/.gradle/gradle.properties
-          echo "org.gradle.parallel=false" >> ~/.gradle/gradle.properties
-          echo "org.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m" >> ~/.gradle/gradle.properties
+          # SDK Environment Setup
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-          # Build Debug APK with single process
-          ./gradlew assembleDebug --no-daemon --no-parallel --stacktrace
+          # Clean Build
+          ./gradlew clean --no-daemon
 
-          # Build Release AAB (Play Store)
-          ./gradlew bundleRelease --no-daemon --no-parallel --stacktrace
+          # Build Debug APK (దీనిలో సైనింగ్ ముందే ఉంటుంది)
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+          # Build Release Bundle (AAB)
+          ./gradlew bundle --no-daemon --stacktrace
 
           SLUG=$(node -p "require('../../config.json').app_slug")
+          
+          # ఫైల్స్ కాపీ చేయడం
           cp app/build/outputs/apk/debug/app-debug.apk ../../${SLUG}-debug.apk
-          cp app/build/outputs/bundle/release/app-release.aab ../../${SLUG}-release.aab
+          
+          # AAB ఫైల్ పాత్ చెక్ చేసి కాపీ చేయడం
+          if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
+            cp app/build/outputs/bundle/release/app-release.aab ../../${SLUG}-release.aab
+          elif [ -f "app/build/outputs/bundle/debug/app-debug.aab" ]; then
+            cp app/build/outputs/bundle/debug/app-debug.aab ../../${SLUG}-release.aab
+          fi
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
