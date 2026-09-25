@@ -1,4 +1,4 @@
-name: Build Android APK and AAB
+name: Build Enterprise Android APK and AAB
 
 on:
   repository_dispatch:
@@ -28,20 +28,22 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Prepare Workspace & Assets
+      - name: Initialize Project & Unpack Source
         run: |
           mkdir -p workspace
           cd workspace
-          
-          # Initialize Capacitor Project
+
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init "${{ github.event.client_payload.app_name }}" "${{ github.event.client_payload.package_name }}" --web-dir "www"
           mkdir -p www
 
-          # Source Type Handling (URL vs ZIP vs HTML)
           SOURCE_TYPE="${{ github.event.client_payload.source_type }}"
-          if [ "$SOURCE_TYPE" = "url" ]; then
+
+          if [ "$SOURCE_TYPE" = "zip" ]; then
+            echo "${{ github.event.client_payload.zip_base64 }}" | base64 -d > project.zip
+            unzip -o project.zip -d www/
+          elif [ "$SOURCE_TYPE" = "url" ]; then
             cat << 'EOF' > www/index.html
             <!DOCTYPE html>
             <html>
@@ -56,40 +58,80 @@ jobs:
           EOF
           elif [ "$SOURCE_TYPE" = "raw_html" ]; then
             echo '${{ github.event.client_payload.html_content }}' > www/index.html
-          elif [ "$SOURCE_TYPE" = "zip" ]; then
-            curl -L "${{ github.event.client_payload.zip_url }}" -o project.zip
-            unzip -o project.zip -d www/
           fi
 
-          # Add Android Platform
           npx cap add android
+
+      - name: Configure App Icon & Manifest Permissions
+        run: |
+          cd workspace
+
+          # Custom App Icon Handling
+          ICON_BASE64="${{ github.event.client_payload.icon_base64 }}"
+          if [ -n "$ICON_BASE64" ]; then
+            echo "$ICON_BASE64" | base64 -d > custom_icon.png
+            for res in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+              mkdir -p android/app/src/main/res/mipmap-$res
+              cp custom_icon.png android/app/src/main/res/mipmap-$res/ic_launcher.png
+              cp custom_icon.png android/app/src/main/res/mipmap-$res/ic_launcher_round.png
+            done
+          fi
+
+          # AndroidManifest Permissions & Settings Injection
+          node -e '
+            const fs = require("fs");
+            const manifestPath = "android/app/src/main/AndroidManifest.xml";
+            let content = fs.readFileSync(manifestPath, "utf8");
+            const payload = ${{ toJson(github.event.client_payload) }};
+            const p = payload.permissions || {};
+
+            let perms = "";
+            if (p.internet) perms += "\n    <uses-permission android:name=\"android.permission.INTERNET\" />";
+            if (p.camera) perms += "\n    <uses-permission android:name=\"android.permission.CAMERA\" />";
+            if (p.fine_location) perms += "\n    <uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\" />";
+            if (p.coarse_location) perms += "\n    <uses-permission android:name=\"android.permission.ACCESS_COARSE_LOCATION\" />";
+            if (p.storage) perms += "\n    <uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\" />\n    <uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\" />";
+            if (p.audio) perms += "\n    <uses-permission android:name=\"android.permission.RECORD_AUDIO\" />";
+            if (p.notifications) perms += "\n    <uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" />";
+            if (p.bluetooth) perms += "\n    <uses-permission android:name=\"android.permission.BLUETOOTH\" />";
+
+            content = content.replace("<manifest", "<manifest" + perms);
+
+            // Orientation
+            if (payload.orientation && payload.orientation !== "unspecified") {
+              content = content.replace("android:screenOrientation=\"unspecified\"", `android:screenOrientation=\"${payload.orientation}\"`);
+            }
+
+            // Cleartext Traffic (HTTP)
+            if (payload.cleartext) {
+              content = content.replace("<application", "<application android:usesCleartextTraffic=\"true\"");
+            }
+
+            fs.writeFileSync(manifestPath, content);
+          '
+
           npx cap sync android
 
-      - name: Setup Keystore & Build Release
+      - name: Build Release Binaries (Gradle APK & AAB)
         run: |
           cd workspace/android
-          
-          # Keystore generation for APK & AAB signing
-          KEYSTORE_FILE="release.jks"
-          keytool -genkey -v -keystore $KEYSTORE_FILE -alias my-alias -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass "androidsecret123" -keypass "androidsecret123" \
-            -dname "CN=Builder, OU=App, O=Dev, L=Hyd, S=TS, C=IN"
 
-          # Build Debug APK
+          # Keystore Management
+          KEYSTORE="release.jks"
+          keytool -genkey -v -keystore $KEYSTORE -alias app-key -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "buildsecret99" -keypass "buildsecret99" \
+            -dname "CN=Builder, OU=Dev, O=App, L=Hyd, S=TS, C=IN"
+
           ./gradlew assembleDebug
-
-          # Build Release AAB (For Play Store)
           ./gradlew bundleRelease
 
-          # Sign APK
           cp app/build/outputs/apk/debug/app-debug.apk ../../${{ github.event.client_payload.app_slug }}-debug.apk
           cp app/build/outputs/bundle/release/app-release.aab ../../${{ github.event.client_payload.app_slug }}-release.aab
 
-      - name: Create GitHub Release
-        id: create_release
+      - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "release-${{ github.event.client_payload.app_slug }}-${{ github.run_number }}"
+          tag_name: "release-${{ github.event.client_payload.app_slug }}-v${{ github.event.client_payload.version_code }}"
           name: "${{ github.event.client_payload.app_name }} v${{ github.event.client_payload.version_name }}"
           files: |
             *-debug.apk
@@ -103,7 +145,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git pull origin main || true
 
-          RELEASE_TAG="release-${{ github.event.client_payload.app_slug }}-${{ github.run_number }}"
+          RELEASE_TAG="release-${{ github.event.client_payload.app_slug }}-v${{ github.event.client_payload.version_code }}"
           APK_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${{ github.event.client_payload.app_slug }}-debug.apk"
           AAB_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${{ github.event.client_payload.app_slug }}-release.aab"
 
@@ -138,5 +180,5 @@ jobs:
           "
 
           git add apps.json
-          git commit -m "Auto-update apps.json: ${{ github.event.client_payload.app_name }}" || echo "No changes"
+          git commit -m "Store binary metadata: ${{ github.event.client_payload.app_name }}" || echo "No changes"
           git push origin main
