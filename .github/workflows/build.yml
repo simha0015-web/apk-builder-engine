@@ -136,24 +136,31 @@ jobs:
           cd workspace/android
           chmod +x gradlew
 
-          # SDK Environment Setup
+          # 1. కరప్ట్ అయిన కాష్‌లను పూర్తిగా క్లీన్ చేయడం
+          rm -rf ~/.gradle/caches/
+          rm -rf .gradle/
+
+          # 2. ప్రాజెక్ట్ లెవల్ gradle.properties లో సింగిల్ థ్రెడ్ & మెమరీ ఫిక్స్ రాయడం
+          echo "org.gradle.parallel=false" >> gradle.properties
+          echo "org.gradle.daemon=false" >> gradle.properties
+          echo "org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=768m" >> gradle.properties
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+
+          # 3. Android SDK పాత్ సెట్ చేయడం
           echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-          # Clean Build
-          ./gradlew clean --no-daemon
+          # 4. Debug APK బిల్డ్ (No Parallel, No Daemon)
+          ./gradlew assembleDebug --no-daemon --no-parallel --stacktrace
 
-          # Build Debug APK (దీనిలో సైనింగ్ ముందే ఉంటుంది)
-          ./gradlew assembleDebug --no-daemon --stacktrace
-
-          # Build Release Bundle (AAB)
-          ./gradlew bundle --no-daemon --stacktrace
+          # 5. AAB బండిల్ బిల్డ్
+          ./gradlew bundle --no-daemon --no-parallel --stacktrace
 
           SLUG=$(node -p "require('../../config.json').app_slug")
           
           # ఫైల్స్ కాపీ చేయడం
           cp app/build/outputs/apk/debug/app-debug.apk ../../${SLUG}-debug.apk
           
-          # AAB ఫైల్ పాత్ చెక్ చేసి కాపీ చేయడం
           if [ -f "app/build/outputs/bundle/release/app-release.aab" ]; then
             cp app/build/outputs/bundle/release/app-release.aab ../../${SLUG}-release.aab
           elif [ -f "app/build/outputs/bundle/debug/app-debug.aab" ]; then
