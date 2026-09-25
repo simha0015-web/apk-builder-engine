@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Android App Builder</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+    .container { max-width: 800px; margin: auto; }
+    .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
+    h2 { margin-top: 0; color: #38bdf8; }
+    label { display: block; margin-top: 10px; font-size: 14px; color: #94a3b8; }
+    input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; box-sizing: border-box; }
+    button { background: #0284c7; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; width: 100%; }
+    button:hover { background: #0369a1; }
+    .app-card { background: #1e293b; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+    .btn-group a { text-decoration: none; padding: 6px 12px; background: #22c55e; color: white; border-radius: 4px; font-size: 13px; margin-left: 5px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h2>⚡ Create / Update Android App</h2>
+    
+    <label>GitHub Personal Access Token (PAT):</label>
+    <input type="password" id="ghToken" placeholder="ghp_xxxx">
+
+    <label>GitHub Repo (Username/Repo):</label>
+    <input type="text" id="ghRepo" placeholder="username/apk-builder">
+
+    <label>App Name:</label>
+    <input type="text" id="appName" placeholder="e.g. My Awesome App">
+
+    <label>Package Name (App ID):</label>
+    <input type="text" id="pkgName" placeholder="com.mycompany.app">
+
+    <label>Version Name & Code:</label>
+    <div style="display: flex; gap: 10px;">
+      <input type="text" id="vName" value="1.0.0" placeholder="1.0.0">
+      <input type="number" id="vCode" value="1" placeholder="1">
+    </div>
+
+    <label>Source Type:</label>
+    <select id="sourceType" onchange="toggleInputs()">
+      <option value="url">Website URL</option>
+      <option value="raw_html">Direct HTML Code</option>
+      <option value="zip">Project ZIP URL</option>
+    </select>
+
+    <div id="urlBox">
+      <label>Website URL:</label>
+      <input type="url" id="webUrl" placeholder="https://example.com">
+    </div>
+
+    <div id="htmlBox" style="display:none;">
+      <label>HTML Code:</label>
+      <textarea id="rawHtml" rows="5" placeholder="<h1>Hello World</h1>"></textarea>
+    </div>
+
+    <div id="zipBox" style="display:none;">
+      <label>ZIP File Download URL:</label>
+      <input type="url" id="zipUrl" placeholder="https://raw.githubusercontent.com/.../project.zip">
+    </div>
+
+    <button onclick="triggerBuild()">🚀 Trigger APK & AAB Build</button>
+  </div>
+
+  <div class="card">
+    <h2>📱 Created Apps History</h2>
+    <button onclick="loadApps()" style="background:#475569; margin-bottom:15px;">🔄 Refresh Apps List</button>
+    <div id="appsList">మొదటగా మీ Repo వివరాలు ఇచ్చి Refresh చేయండి.</div>
+  </div>
+</div>
+
+<script>
+  function toggleInputs() {
+    const type = document.getElementById('sourceType').value;
+    document.getElementById('urlBox').style.display = type === 'url' ? 'block' : 'none';
+    document.getElementById('htmlBox').style.display = type === 'raw_html' ? 'block' : 'none';
+    document.getElementById('zipBox').style.display = type === 'zip' ? 'block' : 'none';
+  }
+
+  async function triggerBuild() {
+    const token = document.getElementById('ghToken').value.trim();
+    const repo = document.getElementById('ghRepo').value.trim();
+    const name = document.getElementById('appName').value.trim();
+    const pkg = document.getElementById('pkgName').value.trim();
+    const vName = document.getElementById('vName').value.trim();
+    const vCode = parseInt(document.getElementById('vCode').value) || 1;
+    const sourceType = document.getElementById('sourceType').value;
+
+    if (!token || !repo || !name || !pkg) {
+      alert('అన్ని వివరాలు (Token, Repo, App Name, Package Name) ఎంటర్ చేయండి!');
+      return;
+    }
+
+    const payload = {
+      app_name: name,
+      app_slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      package_name: pkg,
+      version_name: vName,
+      version_code: vCode,
+      source_type: sourceType,
+      web_url: document.getElementById('webUrl').value.trim(),
+      html_content: document.getElementById('rawHtml').value,
+      zip_url: document.getElementById('zipUrl').value.trim()
+    };
+
+    const res = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        event_type: 'build_app',
+        client_payload: payload
+      })
+    });
+
+    if (res.ok) {
+      alert('✅ బిల్డ్ ప్రాసెస్ ప్రారంభమైంది! GitHub Actions లో 3-5 నిమిషాల్లో APK మరియు AAB సిద్ధమవుతాయి.');
+    } else {
+      alert('❌ ఫెయిల్ అయింది. Token పర్మిషన్లు (repo scope) సరిగ్గా ఉన్నాయో లేదో చెక్ చేయండి.');
+    }
+  }
+
+  async function loadApps() {
+    const repo = document.getElementById('ghRepo').value.trim();
+    if (!repo) { alert('GitHub Repo వివరాలు ఇవ్వండి!'); return; }
+    
+    try {
+      const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/apps.json?t=${Date.now()}`);
+      const data = await res.json();
+      const list = document.getElementById('appsList');
+      list.innerHTML = '';
+
+      if (data.length === 0) {
+        list.innerHTML = 'ఇంకా ఏ యాప్స్ లేవు.';
+        return;
+      }
+
+      data.forEach(app => {
+        list.innerHTML += `
+          <div class="app-card">
+            <div>
+              <strong>${app.name}</strong> (v${app.version})<br>
+              <small style="color:#94a3b8;">${app.package_name}</small>
+            </div>
+            <div class="btn-group">
+              <a href="${app.apk_url}" target="_blank">📥 APK</a>
+              <a href="${app.aab_url}" target="_blank" style="background:#6366f1;">📦 AAB</a>
+            </div>
+          </div>
+        `;
+      });
+    } catch(e) {
+      alert('apps.json ఫైల్ రీడ్ చేయడం సాధ్యం కాలేదు.');
+    }
+  }
+</script>
+
+</body>
+</html>
