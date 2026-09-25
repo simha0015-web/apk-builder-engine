@@ -3,95 +3,254 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Android App Builder</title>
+  <title>Pro Android App Studio</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
-    .container { max-width: 800px; margin: auto; }
-    .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
-    h2 { margin-top: 0; color: #38bdf8; }
-    label { display: block; margin-top: 10px; font-size: 14px; color: #94a3b8; }
-    input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; box-sizing: border-box; }
-    button { background: #0284c7; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 15px; width: 100%; }
-    button:hover { background: #0369a1; }
-    .app-card { background: #1e293b; padding: 15px; border-radius: 8px; margin-top: 10px; border: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
-    .btn-group a { text-decoration: none; padding: 6px 12px; background: #22c55e; color: white; border-radius: 4px; font-size: 13px; margin-left: 5px; }
+    :root {
+      --bg: #0b0f19;
+      --card: #151d30;
+      --border: #263352;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; line-height: 1.5; }
+    .container { max-width: 900px; margin: auto; }
+    .header { text-align: center; margin-bottom: 25px; }
+    .header h1 { margin: 0; color: var(--accent); font-size: 26px; }
+    .header p { color: var(--text-muted); margin: 5px 0 0; font-size: 14px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    h2 { margin-top: 0; font-size: 18px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    label { display: block; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    input, select, textarea { width: 100%; padding: 11px; margin-top: 5px; border-radius: 8px; border: 1px solid var(--border); background: #0b1120; color: #fff; box-sizing: border-box; font-size: 14px; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
+    .permissions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+    .perm-item { background: #0b1120; padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; }
+    .perm-item input { width: auto; margin: 0; }
+    .file-drop { border: 2px dashed var(--border); padding: 15px; border-radius: 8px; text-align: center; background: #0b1120; cursor: pointer; margin-top: 5px; }
+    .file-drop input { display: none; }
+    .file-status { margin-top: 8px; font-size: 12px; color: var(--accent); font-weight: bold; }
+    button.build-btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; margin-top: 20px; transition: background 0.2s; }
+    button.build-btn:hover { background: var(--primary-hover); }
+    .app-card { background: #0b1120; padding: 16px; border-radius: 10px; margin-top: 12px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .btn-group a { text-decoration: none; padding: 8px 14px; background: #16a34a; color: white; border-radius: 6px; font-size: 13px; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+    .btn-group a.aab { background: #7c3aed; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="card">
-    <h2>⚡ Create / Update Android App</h2>
-    
-    <label>GitHub Personal Access Token (PAT):</label>
-    <input type="password" id="ghToken" placeholder="ghp_xxxx">
-
-    <label>GitHub Repo (Username/Repo):</label>
-    <input type="text" id="ghRepo" placeholder="username/apk-builder">
-
-    <label>App Name:</label>
-    <input type="text" id="appName" placeholder="e.g. My Awesome App">
-
-    <label>Package Name (App ID):</label>
-    <input type="text" id="pkgName" placeholder="com.mycompany.app">
-
-    <label>Version Name & Code:</label>
-    <div style="display: flex; gap: 10px;">
-      <input type="text" id="vName" value="1.0.0" placeholder="1.0.0">
-      <input type="number" id="vCode" value="1" placeholder="1">
-    </div>
-
-    <label>Source Type:</label>
-    <select id="sourceType" onchange="toggleInputs()">
-      <option value="url">Website URL</option>
-      <option value="raw_html">Direct HTML Code</option>
-      <option value="zip">Project ZIP URL</option>
-    </select>
-
-    <div id="urlBox">
-      <label>Website URL:</label>
-      <input type="url" id="webUrl" placeholder="https://example.com">
-    </div>
-
-    <div id="htmlBox" style="display:none;">
-      <label>HTML Code:</label>
-      <textarea id="rawHtml" rows="5" placeholder="<h1>Hello World</h1>"></textarea>
-    </div>
-
-    <div id="zipBox" style="display:none;">
-      <label>ZIP File Download URL:</label>
-      <input type="url" id="zipUrl" placeholder="https://raw.githubusercontent.com/.../project.zip">
-    </div>
-
-    <button onclick="triggerBuild()">🚀 Trigger APK & AAB Build</button>
+  <div class="header">
+    <h1>🚀 Android Cloud App Studio</h1>
+    <p>URL, HTML లేదా Local ZIP ద్వారా Play Store-రెడీ APK & AAB ఫైల్స్ నిర్మించండి</p>
   </div>
 
   <div class="card">
-    <h2>📱 Created Apps History</h2>
-    <button onclick="loadApps()" style="background:#475569; margin-bottom:15px;">🔄 Refresh Apps List</button>
-    <div id="appsList">మొదటగా మీ Repo వివరాలు ఇచ్చి Refresh చేయండి.</div>
+    <h2>🔑 యాక్సెస్ సెటప్</h2>
+    <label>GitHub Personal Access Token (PAT):</label>
+    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx">
+    <small style="color:var(--text-muted); font-size:11px;">ఇది మీ బ్రౌజర్ లోకల్ స్టోరేజ్‌లో మాత్రమే సేవ్ అవుతుంది.</small>
+  </div>
+
+  <div class="card">
+    <h2>📱 ప్రాథమిక యాప్ సమాచారం</h2>
+    <div class="grid">
+      <div>
+        <label>App Name:</label>
+        <input type="text" id="appName" placeholder="My Enterprise App">
+      </div>
+      <div>
+        <label>Package Name (Application ID):</label>
+        <input type="text" id="pkgName" placeholder="com.mycompany.app">
+      </div>
+    </div>
+    <div class="grid">
+      <div>
+        <label>Version Name:</label>
+        <input type="text" id="vName" value="1.0.0">
+      </div>
+      <div>
+        <label>Version Code:</label>
+        <input type="number" id="vCode" value="1">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📦 సోర్స్ టైప్ & ఫైల్స్ (Source Input)</h2>
+    <label>సెలెక్ట్ చేయండి:</label>
+    <select id="sourceType" onchange="toggleSource()">
+      <option value="zip">Local ZIP File Upload (HTML, CSS, JS Project)</option>
+      <option value="url">Website URL (Web App / PWA)</option>
+      <option value="raw_html">Direct HTML Code</option>
+    </select>
+
+    <div id="zipBox" style="margin-top:10px;">
+      <label>ప్రాజెక్ట్ ZIP ఫైల్ అప్‌లోడ్ చేయండి:</label>
+      <div class="file-drop" onclick="document.getElementById('zipInput').click()">
+        📁 ZIP ఫైల్ ఎంచుకోవడానికి ఇక్కడ ట్యాప్ చేయండి
+        <input type="file" id="zipInput" accept=".zip" onchange="handleZipUpload(this)">
+      </div>
+      <div id="zipStatus" class="file-status"></div>
+    </div>
+
+    <div id="urlBox" style="display:none; margin-top:10px;">
+      <label>వెబ్‌సైట్ లైవ్ లింక్:</label>
+      <input type="url" id="webUrl" placeholder="https://mycoolsite.com">
+    </div>
+
+    <div id="htmlBox" style="display:none; margin-top:10px;">
+      <label>HTML / CSS / JS కోడ్:</label>
+      <textarea id="rawHtml" rows="6" placeholder="<!DOCTYPE html><html>...</html>"></textarea>
+    </div>
+
+    <div style="margin-top:15px;">
+      <label>యాప్ ఐకాన్ (App Icon - 512x512 PNG రికమండెడ్):</label>
+      <div class="file-drop" onclick="document.getElementById('iconInput').click()">
+        🖼️ ఐకాన్ ఇమేజ్ ఎంచుకోవడానికి ఇక్కడ ట్యాప్ చేయండి (PNG)
+        <input type="file" id="iconInput" accept="image/png" onchange="handleIconUpload(this)">
+      </div>
+      <div id="iconStatus" class="file-status"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔒 ఆండ్రాయిడ్ పర్మిషన్లు (Android Permissions)</h2>
+    <div class="permissions-grid">
+      <label class="perm-item"><input type="checkbox" id="permInternet" checked> Internet Access</label>
+      <label class="perm-item"><input type="checkbox" id="permCamera"> Camera</label>
+      <label class="perm-item"><input type="checkbox" id="permFineLocation"> GPS / Fine Location</label>
+      <label class="perm-item"><input type="checkbox" id="permCoarseLocation"> Network Location</label>
+      <label class="perm-item"><input type="checkbox" id="permStorage"> Read/Write Media</label>
+      <label class="perm-item"><input type="checkbox" id="permAudio"> Record Audio / Mic</label>
+      <label class="perm-item"><input type="checkbox" id="permNotifications" checked> Push Notifications</label>
+      <label class="perm-item"><input type="checkbox" id="permBluetooth"> Bluetooth</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚙️ అడ్వాన్స్‌డ్ & ప్లే స్టోర్ సెట్టింగ్స్</h2>
+    <div class="grid">
+      <div>
+        <label>స్క్రీన్ ఓరియంటేషన్ (Orientation):</label>
+        <select id="orientation">
+          <option value="unspecified">Auto / Sensor-based</option>
+          <option value="portrait">Portrait Only</option>
+          <option value="landscape">Landscape Only</option>
+        </select>
+      </div>
+      <div>
+        <label>నెట్‌వర్క్ సెక్యూరిటీ:</label>
+        <select id="cleartext">
+          <option value="true">Allow HTTP & HTTPS (Cleartext On)</option>
+          <option value="false">Strict HTTPS Only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label>ఫుల్ స్క్రీన్ మోడ్:</label>
+        <select id="fullscreen">
+          <option value="false">Standard (Show Status Bar)</option>
+          <option value="true">Immersive Fullscreen</option>
+        </select>
+      </div>
+      <div>
+        <label>స్టేటస్ బార్ బ్యాక్‌గ్రౌండ్ కలర్ (HEX):</label>
+        <input type="text" id="statusColor" value="#0b0f19" placeholder="#000000">
+      </div>
+    </div>
+
+    <button class="build-btn" onclick="triggerBuild()">⚡ Build Release APK & AAB Now</button>
+  </div>
+
+  <div class="card">
+    <h2>📂 మీ యాప్స్ హిస్టరీ (Store & Update)</h2>
+    <button onclick="loadApps()" style="background:#263352; border:none; padding:10px; border-radius:6px; color:#fff; cursor:pointer; font-weight:bold;">🔄 Refresh Apps List</button>
+    <div id="appsList" style="margin-top:10px;">డేటా లోడ్ చేయడానికి Refresh నొక్కండి.</div>
   </div>
 </div>
 
 <script>
-  function toggleInputs() {
+  let zipBase64 = "";
+  let iconBase64 = "";
+
+  // Auto-detect GitHub username/repo from GitHub Pages URL
+  function detectRepo() {
+    const host = window.location.hostname;
+    const path = window.location.pathname.replace(/^\/|\/$/g, '');
+    if (host.includes('.github.io')) {
+      const username = host.split('.')[0];
+      const repo = path.split('/')[0];
+      return `${username}/${repo}`;
+    }
+    return localStorage.getItem('custom_gh_repo') || "";
+  }
+
+  window.onload = function() {
+    const savedToken = localStorage.getItem('gh_token');
+    if (savedToken) document.getElementById('ghToken').value = savedToken;
+    loadApps();
+  };
+
+  function toggleSource() {
     const type = document.getElementById('sourceType').value;
+    document.getElementById('zipBox').style.display = type === 'zip' ? 'block' : 'none';
     document.getElementById('urlBox').style.display = type === 'url' ? 'block' : 'none';
     document.getElementById('htmlBox').style.display = type === 'raw_html' ? 'block' : 'none';
-    document.getElementById('zipBox').style.display = type === 'zip' ? 'block' : 'none';
+  }
+
+  function handleZipUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      zipBase64 = e.target.result.split(',')[1];
+      document.getElementById('zipStatus').innerText = `✅ ఎంచుకున్నారు: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleIconUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      iconBase64 = e.target.result.split(',')[1];
+      document.getElementById('iconStatus').innerText = `✅ ఐకాన్ ఎంచుకున్నారు: ${file.name}`;
+    };
+    reader.readAsDataURL(file);
   }
 
   async function triggerBuild() {
     const token = document.getElementById('ghToken').value.trim();
-    const repo = document.getElementById('ghRepo').value.trim();
+    let repo = detectRepo();
+
+    if (!repo) {
+      repo = prompt("GitHub Repo పేరు నమోదు చేయండి (ఉదా: username/apk-builder):");
+      if (repo) localStorage.setItem('custom_gh_repo', repo);
+      else return;
+    }
+
+    if (!token) {
+      alert("దయచేసి మీ GitHub PAT Token ఎంటర్ చేయండి!");
+      return;
+    }
+
+    localStorage.setItem('gh_token', token);
+
     const name = document.getElementById('appName').value.trim();
     const pkg = document.getElementById('pkgName').value.trim();
     const vName = document.getElementById('vName').value.trim();
     const vCode = parseInt(document.getElementById('vCode').value) || 1;
     const sourceType = document.getElementById('sourceType').value;
 
-    if (!token || !repo || !name || !pkg) {
-      alert('అన్ని వివరాలు (Token, Repo, App Name, Package Name) ఎంటర్ చేయండి!');
+    if (!name || !pkg) {
+      alert("App Name మరియు Package Name తప్పనిసరి!");
       return;
     }
 
@@ -104,62 +263,89 @@
       source_type: sourceType,
       web_url: document.getElementById('webUrl').value.trim(),
       html_content: document.getElementById('rawHtml').value,
-      zip_url: document.getElementById('zipUrl').value.trim()
+      zip_base64: zipBase64,
+      icon_base64: iconBase64,
+      orientation: document.getElementById('orientation').value,
+      cleartext: document.getElementById('cleartext').value === "true",
+      fullscreen: document.getElementById('fullscreen').value === "true",
+      status_color: document.getElementById('statusColor').value.trim(),
+      permissions: {
+        internet: document.getElementById('permInternet').checked,
+        camera: document.getElementById('permCamera').checked,
+        fine_location: document.getElementById('permFineLocation').checked,
+        coarse_location: document.getElementById('permCoarseLocation').checked,
+        storage: document.getElementById('permStorage').checked,
+        audio: document.getElementById('permAudio').checked,
+        notifications: document.getElementById('permNotifications').checked,
+        bluetooth: document.getElementById('permBluetooth').checked
+      }
     };
 
-    const res = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        event_type: 'build_app',
-        client_payload: payload
-      })
-    });
+    const buildBtn = document.querySelector('.build-btn');
+    buildBtn.innerText = "⏳ బిల్డ్ ఆర్డర్ పంపుతోంది...";
+    buildBtn.disabled = true;
 
-    if (res.ok) {
-      alert('✅ బిల్డ్ ప్రాసెస్ ప్రారంభమైంది! GitHub Actions లో 3-5 నిమిషాల్లో APK మరియు AAB సిద్ధమవుతాయి.');
-    } else {
-      alert('❌ ఫెయిల్ అయింది. Token పర్మిషన్లు (repo scope) సరిగ్గా ఉన్నాయో లేదో చెక్ చేయండి.');
+    try {
+      const res = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          event_type: 'build_app',
+          client_payload: payload
+        })
+      });
+
+      if (res.ok) {
+        alert("🎉 బిల్డ్ విజయవంతంగా ప్రారంభమైంది! 4-5 నిమిషాల్లో కింద లిస్ట్‌లో డౌన్‌లోడ్ లింక్స్ సిద్ధమవుతాయి.");
+      } else {
+        const err = await res.json();
+        alert("బిల్డ్ విఫలమైంది: " + (err.message || "Token సరిచూసుకోండి"));
+      }
+    } catch(e) {
+      alert("కనెక్షన్ లోపం: " + e.message);
+    } finally {
+      buildBtn.innerText = "⚡ Build Release APK & AAB Now";
+      buildBtn.disabled = false;
     }
   }
 
   async function loadApps() {
-    const repo = document.getElementById('ghRepo').value.trim();
-    if (!repo) { alert('GitHub Repo వివరాలు ఇవ్వండి!'); return; }
-    
+    const repo = detectRepo();
+    if (!repo) return;
     try {
       const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/apps.json?t=${Date.now()}`);
+      if (!res.ok) return;
       const data = await res.json();
       const list = document.getElementById('appsList');
       list.innerHTML = '';
 
       if (data.length === 0) {
-        list.innerHTML = 'ఇంకా ఏ యాప్స్ లేవు.';
+        list.innerHTML = 'ఇంకా ఏ యాప్స్ నిర్మించలేదు.';
         return;
       }
 
-      data.forEach(app => {
+      data.reverse().forEach(app => {
         list.innerHTML += `
           <div class="app-card">
             <div>
-              <strong>${app.name}</strong> (v${app.version})<br>
-              <small style="color:#94a3b8;">${app.package_name}</small>
+              <strong>${app.name}</strong> <span style="color:var(--accent); font-size:12px;">v${app.version} (Code: ${app.version_code})</span><br>
+              <small style="color:var(--text-muted);">${app.package_name}</small><br>
+              <small style="color:var(--text-muted); font-size:11px;">చివరి అప్‌డేట్: ${new Date(app.updated_at).toLocaleString()}</small>
             </div>
             <div class="btn-group">
               <a href="${app.apk_url}" target="_blank">📥 APK</a>
-              <a href="${app.aab_url}" target="_blank" style="background:#6366f1;">📦 AAB</a>
+              <a href="${app.aab_url}" target="_blank" class="aab">📦 AAB</a>
             </div>
           </div>
         `;
       });
     } catch(e) {
-      alert('apps.json ఫైల్ రీడ్ చేయడం సాధ్యం కాలేదు.');
+      console.log("apps.json ఇంకా రాలేదు.");
     }
   }
 </script>
-
 </body>
 </html>
