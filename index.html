@@ -225,6 +225,36 @@
     reader.readAsDataURL(file);
   }
 
+  async function uploadFileToGitHub(repo, token, path, contentBase64) {
+    let sha = null;
+    try {
+      const checkRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (checkRes.ok) {
+        const fileData = await checkRes.json();
+        sha = fileData.sha;
+      }
+    } catch(e){}
+
+    const body = {
+      message: `Upload build asset: ${path}`,
+      content: contentBase64
+    };
+    if (sha) body.sha = sha;
+
+    const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!res.ok) throw new Error(`ఫైల్ అప్‌లోడ్ విఫలమైంది (${path})`);
+  }
+
   async function triggerBuild() {
     const token = document.getElementById('ghToken').value.trim();
     let repo = detectRepo();
@@ -253,36 +283,53 @@
       return;
     }
 
-    const appConfig = {
-      app_name: name,
-      app_slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-      package_name: pkg,
-      version_name: vName,
-      version_code: vCode,
-      source_type: sourceType,
-      web_url: document.getElementById('webUrl').value.trim(),
-      html_content: document.getElementById('rawHtml').value,
-      orientation: document.getElementById('orientation').value,
-      cleartext: document.getElementById('cleartext').value === "true",
-      fullscreen: document.getElementById('fullscreen').value === "true",
-      status_color: document.getElementById('statusColor').value.trim(),
-      permissions: {
-        internet: document.getElementById('permInternet').checked,
-        camera: document.getElementById('permCamera').checked,
-        fine_location: document.getElementById('permFineLocation').checked,
-        coarse_location: document.getElementById('permCoarseLocation').checked,
-        storage: document.getElementById('permStorage').checked,
-        audio: document.getElementById('permAudio').checked,
-        notifications: document.getElementById('permNotifications').checked,
-        bluetooth: document.getElementById('permBluetooth').checked
-      }
-    };
-
     const buildBtn = document.querySelector('.build-btn');
-    buildBtn.innerText = "⏳ బిల్డ్ ఆర్డర్ పంపుతోంది...";
+    buildBtn.innerText = "⏳ ఫైల్స్ అప్‌లోడ్ అవుతున్నాయి...";
     buildBtn.disabled = true;
 
     try {
+      let hasCustomZip = false;
+      let hasCustomIcon = false;
+
+      if (sourceType === 'zip' && zipBase64) {
+        await uploadFileToGitHub(repo, token, 'build_cache/project.zip', zipBase64);
+        hasCustomZip = true;
+      }
+
+      if (iconBase64) {
+        await uploadFileToGitHub(repo, token, 'build_cache/icon.png', iconBase64);
+        hasCustomIcon = true;
+      }
+
+      const appConfig = {
+        app_name: name,
+        app_slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        package_name: pkg,
+        version_name: vName,
+        version_code: vCode,
+        source_type: sourceType,
+        web_url: document.getElementById('webUrl').value.trim(),
+        html_content: document.getElementById('rawHtml').value,
+        has_custom_zip: hasCustomZip,
+        has_custom_icon: hasCustomIcon,
+        orientation: document.getElementById('orientation').value,
+        cleartext: document.getElementById('cleartext').value === "true",
+        fullscreen: document.getElementById('fullscreen').value === "true",
+        status_color: document.getElementById('statusColor').value.trim(),
+        permissions: {
+          internet: document.getElementById('permInternet').checked,
+          camera: document.getElementById('permCamera').checked,
+          fine_location: document.getElementById('permFineLocation').checked,
+          coarse_location: document.getElementById('permCoarseLocation').checked,
+          storage: document.getElementById('permStorage').checked,
+          audio: document.getElementById('permAudio').checked,
+          notifications: document.getElementById('permNotifications').checked,
+          bluetooth: document.getElementById('permBluetooth').checked
+        }
+      };
+
+      buildBtn.innerText = "🚀 బిల్డ్ ఆర్డర్ పంపుతోంది...";
+
       const res = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
         method: 'POST',
         headers: {
@@ -292,9 +339,7 @@
         body: JSON.stringify({
           event_type: 'build_app',
           client_payload: {
-            config_json: JSON.stringify(appConfig),
-            zip_base64: zipBase64,
-            icon_base64: iconBase64
+            config_json: JSON.stringify(appConfig)
           }
         })
       });
@@ -306,7 +351,7 @@
         alert("బిల్డ్ విఫలమైంది: " + (err.message || "Token సరిచూసుకోండి"));
       }
     } catch(e) {
-      alert("కనెక్షన్ లోపం: " + e.message);
+      alert("లోపం: " + e.message);
     } finally {
       buildBtn.innerText = "⚡ Build Release APK & AAB Now";
       buildBtn.disabled = false;
