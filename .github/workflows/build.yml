@@ -45,6 +45,7 @@ jobs:
           APP_NAME=$(node -p "require('./config.json').app_name")
           PKG_NAME=$(node -p "require('./config.json').package_name")
           SOURCE_TYPE=$(node -p "require('./config.json').source_type")
+          HAS_ZIP=$(node -p "require('./config.json').has_custom_zip")
 
           mkdir -p workspace
           cd workspace
@@ -54,9 +55,8 @@ jobs:
           npx cap init "$APP_NAME" "$PKG_NAME" --web-dir "www"
           mkdir -p www
 
-          if [ "$SOURCE_TYPE" = "zip" ]; then
-            echo "${{ github.event.client_payload.zip_base64 }}" | base64 -d > project.zip
-            unzip -o project.zip -d www/
+          if [ "$SOURCE_TYPE" = "zip" ] && [ "$HAS_ZIP" = "true" ]; then
+            unzip -o ../build_cache/project.zip -d www/
           elif [ "$SOURCE_TYPE" = "url" ]; then
             WEB_URL=$(node -p "require('../config.json').web_url")
             cat << EOF > www/index.html
@@ -86,13 +86,12 @@ jobs:
           cd workspace
 
           # Custom App Icon Handling
-          ICON_BASE64="${{ github.event.client_payload.icon_base64 }}"
-          if [ -n "$ICON_BASE64" ]; then
-            echo "$ICON_BASE64" | base64 -d > custom_icon.png
+          HAS_ICON=$(node -p "require('../config.json').has_custom_icon")
+          if [ "$HAS_ICON" = "true" ] && [ -f "../build_cache/icon.png" ]; then
             for res in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
               mkdir -p android/app/src/main/res/mipmap-$res
-              cp custom_icon.png android/app/src/main/res/mipmap-$res/ic_launcher.png
-              cp custom_icon.png android/app/src/main/res/mipmap-$res/ic_launcher_round.png
+              cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher.png
+              cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher_round.png
             done
           fi
 
@@ -158,7 +157,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update apps.json Database
+      - name: Update apps.json Database & Cleanup Cache
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
@@ -200,6 +199,8 @@ jobs:
             fs.writeFileSync(file, JSON.stringify(data, null, 2));
           "
 
-          git add apps.json
-          git commit -m "Store binary metadata: $(node -p "require('./config.json').app_name")" || echo "No changes"
+          rm -rf build_cache config.json workspace
+
+          git add apps.json build_cache || true
+          git commit -m "Build completed: $(node -p "require('./config.json').app_name")" || echo "No changes"
           git push origin main
