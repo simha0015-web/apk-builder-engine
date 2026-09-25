@@ -82,24 +82,24 @@ jobs:
         run: |
           cd workspace
 
-          # 1. Custom App Icon - Full Android Adaptive & Legacy Icon Replacement
+          # 1. Custom App Icon Fix (Duplicate Resources లేకుండా క్లీన్ రీప్లేస్‌మెంట్)
           HAS_ICON=$(node -p "require('../config.json').has_custom_icon")
           if [ "$HAS_ICON" = "true" ] && [ -f "../build_cache/icon.png" ]; then
-            echo "Applying custom user icon across all mipmap folders..."
-            
-            # అన్ని mipmap డెన్సిటీలలోకి మీ ఐకాన్ కాపీ చేయడం
+            echo "Applying custom user icon safely..."
+
+            # కాన్‌ఫ్లిక్ట్ తెచ్చే పాత డిఫాల్ట్ XML ఫైల్స్‌ను తొలగించడం
+            rm -rf android/app/src/main/res/mipmap-anydpi-v26
+            rm -f android/app/src/main/res/drawable/ic_launcher_background.xml
+            rm -f android/app/src/main/res/drawable/ic_launcher_foreground.xml
+            rm -f android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml
+
+            # అన్ని mipmap ఫోల్డర్లలో యూజర్ ఐకాన్‌ను సెట్ చేయడం
             for res in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
               mkdir -p android/app/src/main/res/mipmap-$res
               cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher.png
               cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher_round.png
               cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher_foreground.png
             done
-
-            # Capacitor డిఫాల్ట్ Adaptive Icon XML ఫైల్స్ తొలగించడం (దీనివల్ల నేరుగా మీ PNG ఐకాన్ ఫోన్‌లో కనిపిస్తుంది)
-            rm -rf android/app/src/main/res/mipmap-anydpi-v26
-            mkdir -p android/app/src/main/res/drawable
-            cp ../build_cache/icon.png android/app/src/main/res/drawable/ic_launcher_background.png || true
-            cp ../build_cache/icon.png android/app/src/main/res/drawable/ic_launcher_foreground.png || true
           fi
 
           # 2. AndroidManifest Permissions & Settings Injection
