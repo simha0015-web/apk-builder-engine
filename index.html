@@ -504,7 +504,8 @@
     localStorage.setItem('gh_token', token);
 
     const name = document.getElementById('appName').value.trim();
-    const pkg = document.getElementById('pkgName').value.trim();
+    let rawPkg = document.getElementById('pkgName').value.trim().toLowerCase();
+    const pkg = rawPkg.replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '');
     const vName = document.getElementById('vName').value.trim();
     const vCode = parseInt(document.getElementById('vCode').value) || 1;
     const sourceType = document.getElementById('sourceType').value;
