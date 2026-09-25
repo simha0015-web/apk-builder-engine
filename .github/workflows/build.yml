@@ -92,7 +92,7 @@ jobs:
             done
           fi
 
-          # AndroidManifest Injection (XML పాడవకుండా పర్ఫెక్ట్ ప్లేస్‌మెంట్)
+          # AndroidManifest Injection
           node -e '
             const fs = require("fs");
             const manifestPath = "android/app/src/main/AndroidManifest.xml";
@@ -110,15 +110,12 @@ jobs:
             if (p.notifications) perms += "    <uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" />\n";
             if (p.bluetooth) perms += "    <uses-permission android:name=\"android.permission.BLUETOOTH\" />\n";
 
-            // Permissions ను <application ట్యాగ్‌కు ముందే సురక్షితంగా చేర్చడం
             content = content.replace("<application", perms + "    <application");
 
-            // Orientation
             if (payload.orientation && payload.orientation !== "unspecified") {
               content = content.replace("android:screenOrientation=\"unspecified\"", `android:screenOrientation=\"${payload.orientation}\"`);
             }
 
-            // Cleartext Traffic (HTTP సపోర్ట్)
             if (payload.cleartext) {
               content = content.replace("<application", "<application android:usesCleartextTraffic=\"true\"");
             }
@@ -128,19 +125,39 @@ jobs:
 
           npx cap sync android
 
-      - name: Build Android Binaries
+      - name: Resolve Kotlin Duplicate Classes & Build Binaries
         run: |
           cd workspace/android
           chmod +x gradlew
 
           echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-          # Release బిల్డ్ కోసం డీబగ్ సైనింగ్ కాన్ఫిగరేషన్ ఇంజెక్ట్ చేయడం
+          # 1. Duplicate Kotlin Classes నివారించడానికి & Signing కాన్ఫిగర్ చేయడానికి Gradle స్క్రిప్ట్ అప్‌డేట్
           node -e '
             const fs = require("fs");
             const gradlePath = "app/build.gradle";
             let content = fs.readFileSync(gradlePath, "utf8");
+
+            // Signing config
             content = content.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.debug\n        }");
+
+            // Kotlin Duplicate Class Resolution Strategy
+            const resolutionFix = `
+configurations.all {
+    resolutionStrategy {
+        eachDependency { details ->
+            if (details.requested.group == "org.jetbrains.kotlin") {
+                if (details.requested.name == "kotlin-stdlib-jdk7" || details.requested.name == "kotlin-stdlib-jdk8") {
+                    details.useTarget("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
+                }
+            }
+        }
+    }
+}
+dependencies {
+    implementation platform("org.jetbrains.kotlin:kotlin-bom:1.8.22")
+`;
+            content = content.replace("dependencies {", resolutionFix);
             fs.writeFileSync(gradlePath, content);
           '
 
