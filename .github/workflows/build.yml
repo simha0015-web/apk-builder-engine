@@ -82,7 +82,7 @@ jobs:
         run: |
           cd workspace
 
-          # Custom App Icon Handling
+          # Custom App Icon
           HAS_ICON=$(node -p "require('../config.json').has_custom_icon")
           if [ "$HAS_ICON" = "true" ] && [ -f "../build_cache/icon.png" ]; then
             for res in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
@@ -113,7 +113,7 @@ jobs:
             content = content.replace("<application", perms + "    <application");
 
             if (payload.orientation && payload.orientation !== "unspecified") {
-              content = content.replace("android:screenOrientation=\"unspecified\"", `android:screenOrientation=\"${payload.orientation}\"`);
+              content = content.replace("android:screenOrientation=\"unspecified\"", "android:screenOrientation=\"" + payload.orientation + "\"");
             }
 
             if (payload.cleartext) {
@@ -132,35 +132,30 @@ jobs:
 
           echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-          # 1. Duplicate Kotlin Classes నివారించడానికి & Signing కాన్ఫిగర్ చేయడానికి Gradle స్క్రిప్ట్ అప్‌డేట్
-          node -e '
-            const fs = require("fs");
-            const gradlePath = "app/build.gradle";
-            let content = fs.readFileSync(gradlePath, "utf8");
+          # 1. Signing Configuration Fix
+          sed -i 's/buildTypes {/buildTypes {\n        release {\n            signingConfig signingConfigs.debug\n        }/' app/build.gradle
 
-            // Signing config
-            content = content.replace("buildTypes {", "buildTypes {\n        release {\n            signingConfig signingConfigs.debug\n        }");
+          # 2. Kotlin Duplicate Class Fix (Native bash append - YAML-safe)
+          cat << 'EOF' >> app/build.gradle
 
-            // Kotlin Duplicate Class Resolution Strategy
-            const resolutionFix = `
-configurations.all {
-    resolutionStrategy {
-        eachDependency { details ->
-            if (details.requested.group == "org.jetbrains.kotlin") {
-                if (details.requested.name == "kotlin-stdlib-jdk7" || details.requested.name == "kotlin-stdlib-jdk8") {
-                    details.useTarget("org.jetbrains.kotlin:kotlin-stdlib:1.8.22")
-                }
-            }
-        }
-    }
-}
-dependencies {
-    implementation platform("org.jetbrains.kotlin:kotlin-bom:1.8.22")
-`;
-            content = content.replace("dependencies {", resolutionFix);
-            fs.writeFileSync(gradlePath, content);
-          '
+          configurations.all {
+              resolutionStrategy {
+                  eachDependency { DependencyResolveDetails details ->
+                      if (details.requested.group == 'org.jetbrains.kotlin') {
+                          if (details.requested.name == 'kotlin-stdlib-jdk7' || details.requested.name == 'kotlin-stdlib-jdk8') {
+                              details.useTarget 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+                          }
+                      }
+                  }
+              }
+          }
 
+          dependencies {
+              implementation platform('org.jetbrains.kotlin:kotlin-bom:1.8.22')
+          }
+          EOF
+
+          # 3. Gradle Performance Tuning
           cat << 'EOF' > gradle.properties
           org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m
           android.useAndroidX=true
@@ -169,7 +164,7 @@ dependencies {
           org.gradle.daemon=false
           EOF
 
-          # Build APK & AAB
+          # 4. Build APK & AAB
           ./gradlew assembleDebug --no-daemon
           ./gradlew bundleRelease --no-daemon
 
