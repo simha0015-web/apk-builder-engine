@@ -86,9 +86,30 @@
       background: #0b1120; 
       cursor: pointer; 
       margin-top: 5px; 
+      transition: border-color 0.2s;
     }
+    .file-drop:hover { border-color: var(--accent); }
     .file-drop input { display: none; }
     .file-status { margin-top: 8px; font-size: 12px; color: var(--accent); font-weight: bold; }
+    
+    .icon-preview-box {
+      display: none;
+      align-items: center;
+      gap: 15px;
+      margin-top: 10px;
+      padding: 10px;
+      background: #0b1120;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .icon-preview-box img {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      border: 1px solid var(--accent);
+      object-fit: cover;
+    }
+
     button.build-btn { 
       background: var(--primary); 
       color: white; 
@@ -133,7 +154,6 @@
     .btn-group a.aab { background: #7c3aed; }
     .btn-group button.btn-update { background: #f59e0b; color: #000; }
 
-    /* లైవ్ బిల్డ్ స్టేటస్ ట్రాకర్ UI */
     #statusBox { 
       display: none; 
       background: #0b1120; 
@@ -220,12 +240,19 @@
     </div>
 
     <div style="margin-top:15px;">
-      <label>యాప్ ఐకాన్ (App Icon - PNG):</label>
+      <label>యాప్ ఐకాన్ (ఏ సైజ్, ఏ ఫార్మాట్ ఫొటో అయినా సరే):</label>
       <div class="file-drop" onclick="document.getElementById('iconInput').click()">
-        🖼️ ఐకాన్ ఇమేజ్ ఎంచుకోవడానికి ఇక్కడ ట్యాప్ చేయండి (PNG)
-        <input type="file" id="iconInput" accept="image/png" onchange="handleIconUpload(this)">
+        🖼️ ఐకాన్ ఎంచుకోవడానికి ఇక్కడ ట్యాప్ చేయండి (PNG, JPG, WEBP)
+        <input type="file" id="iconInput" accept="image/*" onchange="handleUniversalIconUpload(this)">
       </div>
       <div id="iconStatus" class="file-status"></div>
+      <div id="iconPreviewBox" class="icon-preview-box">
+        <img id="iconPreviewImg" src="" alt="Icon Preview">
+        <div style="font-size:12px; color:var(--text-muted);">
+          <strong style="color:var(--accent);">ఆటోమేటిక్ ఆప్టిమైజేషన్ పూర్తయింది!</strong><br>
+          512x512 స్క్వేర్ PNG కి రీసైజ్ చేయబడింది.
+        </div>
+      </div>
     </div>
   </div>
 
@@ -279,7 +306,6 @@
 
     <button class="build-btn" onclick="triggerBuild()">⚡ Build Release APK & AAB Now</button>
 
-    <!-- లైవ్ బిల్డ్ స్టేటస్ ట్రాకర్ విభాగం -->
     <div id="statusBox">
       <div class="status-header">
         <span id="statusTitle">🚀 బిల్డ్ ప్రారంభమవుతోంది...</span>
@@ -343,18 +369,52 @@
     reader.readAsDataURL(file);
   }
 
-  function handleIconUpload(input) {
+  // ఏ సైజ్, ఏ రిజల్యూషన్ ఇమేజ్ ఇచ్చినా 512x512 కి స్మార్ట్ సెంటర్ క్రాపింగ్ & కంప్రెస్ చేసే ఫంక్షన్
+  function handleUniversalIconUpload(input) {
     const file = input.files[0];
     if (!file) return;
+
+    document.getElementById('iconStatus').innerText = `⏳ ప్రాసెస్ అవుతోంది: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)...`;
+
+    const img = new Image();
     const reader = new FileReader();
+
     reader.onload = function(e) {
-      iconBase64 = e.target.result.split(',')[1];
-      document.getElementById('iconStatus').innerText = `✅ ఐకాన్ ఎంచుకున్నారు: ${file.name}`;
+      img.src = e.target.result;
     };
+
+    img.onload = function() {
+      // 512x512 హై-క్వాలిటీ కాన్వాస్ సృష్టి
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // ఇమేజ్ స్ట్రెచ్ కాకుండా స్క్వేర్ షేప్‌లో సెంటర్ క్రాప్ చేయడం (Center-crop Logic)
+      const minDim = Math.min(img.width, img.height);
+      const startX = (img.width - minDim) / 2;
+      const startY = (img.height - minDim) / 2;
+
+      ctx.clearRect(0, 0, 512, 512);
+      ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, 512, 512);
+
+      // కేవలం 40-70 KB తేలికైన హై-క్వాలిటీ PNGగా మార్పు
+      const dataUrl = canvas.toDataURL('image/png', 0.92);
+      iconBase64 = dataUrl.split(',')[1];
+
+      // ప్రివ్యూ మరియు స్టేటస్ చూపించడం
+      document.getElementById('iconPreviewImg').src = dataUrl;
+      document.getElementById('iconPreviewBox').style.display = 'flex';
+      document.getElementById('iconStatus').innerText = `✅ సిద్ధమైంది: ${(iconBase64.length * 0.75 / 1024).toFixed(1)} KB కి ఆప్టిమైజ్ చేయబడింది`;
+    };
+
+    reader.onerror = function() {
+      alert("ఇమేజ్ రీడ్ చేయడం సాధ్యం కాలేదు. దయచేసి వేరే ఫోటో ఎంచుకోండి.");
+    };
+
     reader.readAsDataURL(file);
   }
 
-  // పాత యాప్ వివరాలను ఫారమ్‌లోకి నింపి అప్‌డేట్ కోసం సిద్ధం చేసే ఫంక్షన్
   function prepareUpdateApp(pkg) {
     const app = cachedApps.find(a => a.package_name === pkg);
     if (!app) return;
@@ -362,11 +422,9 @@
     document.getElementById('appName').value = app.name;
     document.getElementById('pkgName').value = app.package_name;
 
-    // Version Code ఆటోమేటిక్‌గా 1 నంబర్ పెరుగుతుంది
     const currentCode = parseInt(app.version_code) || 1;
     document.getElementById('vCode').value = currentCode + 1;
 
-    // Version Name ఆటోమేటిక్‌గా ఇంక్రిమెంట్ అవుతుంది
     const vParts = (app.version || "1.0.0").split('.');
     if (vParts.length === 3 && !isNaN(vParts[2])) {
       vParts[2] = parseInt(vParts[2]) + 1;
@@ -391,8 +449,11 @@
   async function uploadFileToGitHub(repo, token, path, contentBase64) {
     let sha = null;
     try {
-      const checkRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const checkRes = await fetch(`https://api.github.com/repos/${repo}/contents/${path}?t=${Date.now()}`, {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github+json'
+        }
       });
       if (checkRes.ok) {
         const fileData = await checkRes.json();
@@ -415,10 +476,12 @@
       body: JSON.stringify(body)
     });
 
-    if (!res.ok) throw new Error(`ఫైల్ అప్‌లోడ్ విఫలమైంది (${path})`);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(`ఫైల్ అప్‌లోడ్ విఫలమైంది (${path}): ` + (err.message || res.statusText));
+    }
   }
 
-  // లైవ్ బిల్డ్ స్టేటస్ ట్రాకింగ్ ఫంక్షన్
   async function startTrackingBuild(repo, token) {
     const statusBox = document.getElementById('statusBox');
     const statusTitle = document.getElementById('statusTitle');
@@ -458,7 +521,7 @@
           } else if (run.status === "in_progress") {
             statusBadge.innerText = "బిల్డ్ అవుతోంది...";
             progressBar.style.width = "65%";
-            statusDetail.innerText = "Capacitor ద్వారా ప్రాజెక్ట్ సెటప్ అయి APK & AAB ఫైల్స్ కంపైల్ అవుతున్నాయి (3-4 నిమిషాలు)...";
+            statusDetail.innerText = "Capacitor ద్వారా కోడ్ సింక్ అయి APK & AAB ఫైల్స్ కంపైల్ అవుతున్నాయి (3-4 నిమిషాలు)...";
           } else if (run.status === "completed") {
             clearInterval(statusPoller);
             if (run.conclusion === "success") {
@@ -466,7 +529,7 @@
               statusBadge.innerText = "✅ పూర్తయింది";
               progressBar.style.width = "100%";
               statusTitle.innerText = "🎉 యాప్ బిల్డ్ విజయవంతమైంది!";
-              statusDetail.innerText = "APK మరియు AAB ఫైల్స్ రెడీ అయ్యాయి. కింద లిస్ట్‌లో డౌన్‌లోడ్ చేసుకోండి.";
+              statusDetail.innerText = "APK మరియు AAB ఫైల్స్ సిద్ధమయ్యాయి. కింద లిస్ట్‌లో డౌన్‌లోడ్ చేసుకోండి.";
               loadApps();
             } else {
               statusBadge.className = "badge badge-failed";
@@ -474,7 +537,7 @@
               progressBar.style.width = "100%";
               progressBar.style.background = "#ef4444";
               statusTitle.innerText = "బిల్డ్ ఫెయిల్ అయింది!";
-              statusDetail.innerText = "వివరాల కోసం పై లింక్ ఓపెన్ చేసి లైవ్ లాగ్స్ చూడండి.";
+              statusDetail.innerText = "ఎర్రర్ వివరాల కోసం పై లింక్ ఓపెన్ చేసి లాగ్స్ చెక్ చేయండి.";
             }
           }
         }
@@ -506,6 +569,7 @@
     const name = document.getElementById('appName').value.trim();
     let rawPkg = document.getElementById('pkgName').value.trim().toLowerCase();
     const pkg = rawPkg.replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '');
+
     const vName = document.getElementById('vName').value.trim();
     const vCode = parseInt(document.getElementById('vCode').value) || 1;
     const sourceType = document.getElementById('sourceType').value;
