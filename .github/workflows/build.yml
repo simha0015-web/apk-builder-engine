@@ -1,0 +1,142 @@
+name: Build Android APK and AAB
+
+on:
+  repository_dispatch:
+    types: [build_app]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare Workspace & Assets
+        run: |
+          mkdir -p workspace
+          cd workspace
+          
+          # Initialize Capacitor Project
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "${{ github.event.client_payload.app_name }}" "${{ github.event.client_payload.package_name }}" --web-dir "www"
+          mkdir -p www
+
+          # Source Type Handling (URL vs ZIP vs HTML)
+          SOURCE_TYPE="${{ github.event.client_payload.source_type }}"
+          if [ "$SOURCE_TYPE" = "url" ]; then
+            cat << 'EOF' > www/index.html
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>body,html,iframe{margin:0;padding:0;height:100%;width:100%;border:none;overflow:hidden;}</style>
+            </head>
+            <body>
+              <script>window.location.href = "${{ github.event.client_payload.web_url }}";</script>
+            </body>
+            </html>
+          EOF
+          elif [ "$SOURCE_TYPE" = "raw_html" ]; then
+            echo '${{ github.event.client_payload.html_content }}' > www/index.html
+          elif [ "$SOURCE_TYPE" = "zip" ]; then
+            curl -L "${{ github.event.client_payload.zip_url }}" -o project.zip
+            unzip -o project.zip -d www/
+          fi
+
+          # Add Android Platform
+          npx cap add android
+          npx cap sync android
+
+      - name: Setup Keystore & Build Release
+        run: |
+          cd workspace/android
+          
+          # Keystore generation for APK & AAB signing
+          KEYSTORE_FILE="release.jks"
+          keytool -genkey -v -keystore $KEYSTORE_FILE -alias my-alias -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "androidsecret123" -keypass "androidsecret123" \
+            -dname "CN=Builder, OU=App, O=Dev, L=Hyd, S=TS, C=IN"
+
+          # Build Debug APK
+          ./gradlew assembleDebug
+
+          # Build Release AAB (For Play Store)
+          ./gradlew bundleRelease
+
+          # Sign APK
+          cp app/build/outputs/apk/debug/app-debug.apk ../../${{ github.event.client_payload.app_slug }}-debug.apk
+          cp app/build/outputs/bundle/release/app-release.aab ../../${{ github.event.client_payload.app_slug }}-release.aab
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "release-${{ github.event.client_payload.app_slug }}-${{ github.run_number }}"
+          name: "${{ github.event.client_payload.app_name }} v${{ github.event.client_payload.version_name }}"
+          files: |
+            *-debug.apk
+            *-release.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update apps.json Database
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git pull origin main || true
+
+          RELEASE_TAG="release-${{ github.event.client_payload.app_slug }}-${{ github.run_number }}"
+          APK_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${{ github.event.client_payload.app_slug }}-debug.apk"
+          AAB_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${{ github.event.client_payload.app_slug }}-release.aab"
+
+          node -e "
+            const fs = require('fs');
+            const file = 'apps.json';
+            let data = [];
+            if (fs.existsSync(file)) {
+              try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch(e){}
+            }
+            const payload = ${{ toJson(github.event.client_payload) }};
+            const appIndex = data.findIndex(a => a.package_name === payload.package_name);
+            
+            const appDetails = {
+              name: payload.app_name,
+              package_name: payload.package_name,
+              version: payload.version_name,
+              version_code: payload.version_code,
+              source_type: payload.source_type,
+              apk_url: '${APK_URL}',
+              aab_url: '${AAB_URL}',
+              updated_at: new Date().toISOString()
+            };
+
+            if(appIndex >= 0) {
+              data[appIndex] = appDetails;
+            } else {
+              data.push(appDetails);
+            }
+
+            fs.writeFileSync(file, JSON.stringify(data, null, 2));
+          "
+
+          git add apps.json
+          git commit -m "Auto-update apps.json: ${{ github.event.client_payload.app_name }}" || echo "No changes"
+          git push origin main
