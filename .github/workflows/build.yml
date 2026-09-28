@@ -52,22 +52,26 @@ jobs:
           npx cap init "$APP_NAME" "$PKG_NAME" --web-dir "www"
           mkdir -p www
 
-          if [ "$SOURCE_TYPE" = "zip" ] && [ "$HAS_ZIP" = "true" ]; then
+          # ఒకవేళ వెబ్‌సైట్ URL అయితే యాప్ లోపలే ఓపెన్ అయ్యేలా capacitor.config.json ను కాన్ఫిగర్ చేయడం
+          if [ "$SOURCE_TYPE" = "url" ]; then
+            node -e "
+              const fs = require('fs');
+              const cfg = require('../config.json');
+              const capConfig = {
+                appId: cfg.package_name,
+                appName: cfg.app_name,
+                webDir: 'www',
+                server: {
+                  url: cfg.web_url,
+                  cleartext: true,
+                  androidScheme: 'https'
+                }
+              };
+              fs.writeFileSync('capacitor.config.json', JSON.stringify(capConfig, null, 2));
+              fs.writeFileSync('www/index.html', '<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><style>body{background:#0b0f19;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;}</style></head><body><h3>Loading...</h3></body></html>');
+            "
+          elif [ "$SOURCE_TYPE" = "zip" ] && [ "$HAS_ZIP" = "true" ]; then
             unzip -o ../build_cache/project.zip -d www/
-          elif [ "$SOURCE_TYPE" = "url" ]; then
-            WEB_URL=$(node -p "require('../config.json').web_url")
-            cat << EOF > www/index.html
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>body,html,iframe{margin:0;padding:0;height:100%;width:100%;border:none;overflow:hidden;}</style>
-            </head>
-            <body>
-              <script>window.location.href = "$WEB_URL";</script>
-            </body>
-            </html>
-          EOF
           elif [ "$SOURCE_TYPE" = "raw_html" ]; then
             node -e "
               const fs = require('fs');
@@ -82,18 +86,16 @@ jobs:
         run: |
           cd workspace
 
-          # 1. Custom App Icon Fix (Duplicate Resources లేకుండా క్లీన్ రీప్లేస్‌మెంట్)
+          # 1. Custom App Icon Fix (Clean Replacement)
           HAS_ICON=$(node -p "require('../config.json').has_custom_icon")
           if [ "$HAS_ICON" = "true" ] && [ -f "../build_cache/icon.png" ]; then
             echo "Applying custom user icon safely..."
 
-            # కాన్‌ఫ్లిక్ట్ తెచ్చే పాత డిఫాల్ట్ XML ఫైల్స్‌ను తొలగించడం
             rm -rf android/app/src/main/res/mipmap-anydpi-v26
             rm -f android/app/src/main/res/drawable/ic_launcher_background.xml
             rm -f android/app/src/main/res/drawable/ic_launcher_foreground.xml
             rm -f android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml
 
-            # అన్ని mipmap ఫోల్డర్లలో యూజర్ ఐకాన్‌ను సెట్ చేయడం
             for res in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
               mkdir -p android/app/src/main/res/mipmap-$res
               cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher.png
@@ -126,9 +128,8 @@ jobs:
               content = content.replace("android:screenOrientation=\"unspecified\"", "android:screenOrientation=\"" + payload.orientation + "\"");
             }
 
-            if (payload.cleartext) {
-              content = content.replace("<application", "<application android:usesCleartextTraffic=\"true\"");
-            }
+            // Always allow cleartext traffic for webviews
+            content = content.replace("<application", "<application android:usesCleartextTraffic=\"true\"");
 
             fs.writeFileSync(manifestPath, content);
           '
