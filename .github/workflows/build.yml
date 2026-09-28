@@ -57,22 +57,19 @@ jobs:
             node -e "
               const fs = require('fs');
               const cfg = require('../config.json');
-              let targetUrl = cfg.web_url.trim();
-
               const capConfig = {
                 appId: cfg.package_name,
                 appName: cfg.app_name,
                 webDir: 'www',
                 server: {
-                  url: targetUrl,
+                  url: cfg.web_url.trim(),
                   cleartext: true,
                   androidScheme: 'https',
                   allowNavigation: ['*']
                 },
                 android: {
                   allowMixedContent: true,
-                  captureInput: true,
-                  webContentsDebuggingEnabled: false
+                  captureInput: true
                 }
               };
               fs.writeFileSync('capacitor.config.json', JSON.stringify(capConfig, null, 2));
@@ -90,79 +87,74 @@ jobs:
 
           npx cap add android
 
-      - name: Force Native In-App WebView & Inject Hardware Back Button
+      - name: Force Native In-App Engine & Back Button
+        run: |
+          cd workspace
+          
+          # Native In-App WebView Logic ని MainActivity లోకి సురక్షితంగా రాయడం
+          PKG_PATH=$(node -p "require('../config.json').package_name.replace(/\./g, '/')")
+          TARGET_FILE="android/app/src/main/java/${PKG_PATH}/MainActivity.java"
+          PKG_NAME=$(node -p "require('../config.json').package_name")
+
+          cat << EOF > "$TARGET_FILE"
+          package ${PKG_NAME};
+
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import android.webkit.WebSettings;
+          import android.content.Intent;
+          import android.net.Uri;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onResume() {
+                  super.onResume();
+                  if (this.bridge != null && this.bridge.getWebView() != null) {
+                      WebView webView = this.bridge.getWebView();
+                      WebSettings settings = webView.getSettings();
+                      settings.setJavaScriptEnabled(true);
+                      settings.setDomStorageEnabled(true);
+                      settings.setDatabaseEnabled(true);
+                      settings.setAllowFileAccess(true);
+                      settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+                      webView.setWebViewClient(new WebViewClient() {
+                          @Override
+                          public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                              if (url.startsWith("http://") || url.startsWith("https://")) {
+                                  view.loadUrl(url);
+                                  return true;
+                              }
+                              try {
+                                  Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                                  view.getContext().startActivity(intent);
+                                  return true;
+                              } catch (Exception e) {
+                                  return true;
+                              }
+                          }
+                      });
+                  }
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (this.bridge != null && this.bridge.getWebView() != null && this.bridge.getWebView().canGoBack()) {
+                      this.bridge.getWebView().goBack();
+                  } else {
+                      super.onBackPressed();
+                  }
+              }
+          }
+          EOF
+
+      - name: Configure App Icon & Fix AndroidManifest
         run: |
           cd workspace
 
-          SOURCE_TYPE=$(node -p "require('../config.json').source_type")
-          if [ "$SOURCE_TYPE" = "url" ]; then
-            MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java")
-            echo "Injecting Native In-App Engine into: $MAIN_ACTIVITY"
-            
-            node -e "
-              const fs = require('fs');
-              const path = '$MAIN_ACTIVITY';
-              let code = fs.readFileSync(path, 'utf8');
-
-              // అవసరమైన ఆండ్రాయిడ్ నేటివ్ లైబ్రరీలు జోడించడం
-              const imports = \`import com.getcapacitor.BridgeActivity;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.webkit.WebSettings;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;\`;
-
-              code = code.replace('import com.getcapacitor.BridgeActivity;', imports);
-
-              // 100% In-App లాజిక్ & మొబైల్ బ్యాక్ బటన్ ఫంక్షనాలిటీ
-              const nativeFeatures = \`
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (this.bridge != null && this.bridge.getWebView() != null) {
-            WebView webView = this.bridge.getWebView();
-            WebSettings settings = webView.getSettings();
-            settings.setJavaScriptEnabled(true);
-            settings.setDomStorageEnabled(true);
-            settings.setDatabaseEnabled(true);
-            settings.setAllowFileAccess(true);
-            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-            
-            webView.setWebViewClient(new WebViewClient() {
-                @Override
-                public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    if (url.startsWith(\"http://\") || url.startsWith(\"https://\")) {
-                        view.loadUrl(url);
-                        return true;
-                    }
-                    try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        view.getContext().startActivity(intent);
-                        return true;
-                    } catch (Exception e) {
-                        return true;
-                    }
-                }
-            });
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (this.bridge != null && this.bridge.getWebView() != null && this.bridge.getWebView().canGoBack()) {
-            this.bridge.getWebView().goBack();
-        } else {
-            super.onBackPressed();
-        }
-    }
-}\`;
-              code = code.replace(/}\\s*$/, nativeFeatures);
-              fs.writeFileSync(path, code);
-            "
-          fi
-
-          # Custom App Icon Handling (Clean Replacement)
+          # Custom App Icon Handling
           HAS_ICON=$(node -p "require('../config.json').has_custom_icon")
           if [ "$HAS_ICON" = "true" ] && [ -f "../build_cache/icon.png" ]; then
             echo "Applying custom user icon safely..."
@@ -204,7 +196,6 @@ import android.os.Bundle;\`;
               content = content.replace("android:screenOrientation=\"unspecified\"", "android:screenOrientation=\"" + payload.orientation + "\"");
             }
 
-            // HTTP & HTTPS Always Cleartext Allowed
             content = content.replace("<application", "<application android:usesCleartextTraffic=\"true\"");
 
             fs.writeFileSync(manifestPath, content);
