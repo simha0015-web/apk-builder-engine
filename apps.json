@@ -2,11 +2,11 @@
   {
     "name": "Live Attendance app",
     "package_name": "com.liveattendance.app",
-    "version": "1.0.5",
-    "version_code": 6,
+    "version": "1.0.6",
+    "version_code": 7,
     "source_type": "url",
-    "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-live-attendance-app-v6/live-attendance-app-debug.apk",
-    "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-live-attendance-app-v6/live-attendance-app-release.aab",
-    "updated_at": "2026-09-28T03:50:43.869Z"
+    "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-live-attendance-app-v7/live-attendance-app-debug.apk",
+    "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-live-attendance-app-v7/live-attendance-app-release.aab",
+    "updated_at": "2026-09-28T06:58:22.315Z"
   }
 ]
