@@ -52,22 +52,34 @@ jobs:
           npx cap init "$APP_NAME" "$PKG_NAME" --web-dir "www"
           mkdir -p www
 
-          if [ "$SOURCE_TYPE" = "zip" ] && [ "$HAS_ZIP" = "true" ]; then
+          # ఏ వెబ్‌సైట్ ఇచ్చినా నేటివ్ యాప్‌గా మార్చే యూనివర్సల్ కాన్ఫిగరేషన్
+          if [ "$SOURCE_TYPE" = "url" ]; then
+            node -e "
+              const fs = require('fs');
+              const cfg = require('../config.json');
+              let targetUrl = cfg.web_url.trim();
+
+              const capConfig = {
+                appId: cfg.package_name,
+                appName: cfg.app_name,
+                webDir: 'www',
+                server: {
+                  url: targetUrl,
+                  cleartext: true,
+                  androidScheme: 'https',
+                  allowNavigation: ['*']
+                },
+                android: {
+                  allowMixedContent: true,
+                  captureInput: true,
+                  webContentsDebuggingEnabled: false
+                }
+              };
+              fs.writeFileSync('capacitor.config.json', JSON.stringify(capConfig, null, 2));
+              fs.writeFileSync('www/index.html', '<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><style>body{background:#0b0f19;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;}</style></head><body><div style=\"text-align:center;\"><div style=\"width:40px;height:40px;border:3px solid #38bdf8;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:auto;\"></div><p style=\"margin-top:15px;\">Loading...</p></div><style>@keyframes spin{to{transform:rotate(360deg);}}</style></body></html>');
+            "
+          elif [ "$SOURCE_TYPE" = "zip" ] && [ "$HAS_ZIP" = "true" ]; then
             unzip -o ../build_cache/project.zip -d www/
-          elif [ "$SOURCE_TYPE" = "url" ]; then
-            WEB_URL=$(node -p "require('../config.json').web_url")
-            cat << EOF > www/index.html
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <style>body,html,iframe{margin:0;padding:0;height:100%;width:100%;border:none;overflow:hidden;}</style>
-            </head>
-            <body>
-              <script>window.location.href = "$WEB_URL";</script>
-            </body>
-            </html>
-          EOF
           elif [ "$SOURCE_TYPE" = "raw_html" ]; then
             node -e "
               const fs = require('fs');
@@ -78,22 +90,88 @@ jobs:
 
           npx cap add android
 
-      - name: Configure App Icon & Fix AndroidManifest
+      - name: Force Native In-App WebView & Inject Hardware Back Button
         run: |
           cd workspace
 
-          # 1. Custom App Icon Fix (Duplicate Resources లేకుండా క్లీన్ రీప్లేస్‌మెంట్)
+          SOURCE_TYPE=$(node -p "require('../config.json').source_type")
+          if [ "$SOURCE_TYPE" = "url" ]; then
+            MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java")
+            echo "Injecting Native In-App Engine into: $MAIN_ACTIVITY"
+            
+            node -e "
+              const fs = require('fs');
+              const path = '$MAIN_ACTIVITY';
+              let code = fs.readFileSync(path, 'utf8');
+
+              // అవసరమైన ఆండ్రాయిడ్ నేటివ్ లైబ్రరీలు జోడించడం
+              const imports = \`import com.getcapacitor.BridgeActivity;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebSettings;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;\`;
+
+              code = code.replace('import com.getcapacitor.BridgeActivity;', imports);
+
+              // 100% In-App లాజిక్ & మొబైల్ బ్యాక్ బటన్ ఫంక్షనాలిటీ
+              const nativeFeatures = \`
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (this.bridge != null && this.bridge.getWebView() != null) {
+            WebView webView = this.bridge.getWebView();
+            WebSettings settings = webView.getSettings();
+            settings.setJavaScriptEnabled(true);
+            settings.setDomStorageEnabled(true);
+            settings.setDatabaseEnabled(true);
+            settings.setAllowFileAccess(true);
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+            
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                    if (url.startsWith(\"http://\") || url.startsWith(\"https://\")) {
+                        view.loadUrl(url);
+                        return true;
+                    }
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        view.getContext().startActivity(intent);
+                        return true;
+                    } catch (Exception e) {
+                        return true;
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (this.bridge != null && this.bridge.getWebView() != null && this.bridge.getWebView().canGoBack()) {
+            this.bridge.getWebView().goBack();
+        } else {
+            super.onBackPressed();
+        }
+    }
+}\`;
+              code = code.replace(/}\\s*$/, nativeFeatures);
+              fs.writeFileSync(path, code);
+            "
+          fi
+
+          # Custom App Icon Handling (Clean Replacement)
           HAS_ICON=$(node -p "require('../config.json').has_custom_icon")
           if [ "$HAS_ICON" = "true" ] && [ -f "../build_cache/icon.png" ]; then
             echo "Applying custom user icon safely..."
 
-            # కాన్‌ఫ్లిక్ట్ తెచ్చే పాత డిఫాల్ట్ XML ఫైల్స్‌ను తొలగించడం
             rm -rf android/app/src/main/res/mipmap-anydpi-v26
             rm -f android/app/src/main/res/drawable/ic_launcher_background.xml
             rm -f android/app/src/main/res/drawable/ic_launcher_foreground.xml
             rm -f android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml
 
-            # అన్ని mipmap ఫోల్డర్లలో యూజర్ ఐకాన్‌ను సెట్ చేయడం
             for res in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
               mkdir -p android/app/src/main/res/mipmap-$res
               cp ../build_cache/icon.png android/app/src/main/res/mipmap-$res/ic_launcher.png
@@ -102,7 +180,7 @@ jobs:
             done
           fi
 
-          # 2. AndroidManifest Permissions & Settings Injection
+          # AndroidManifest Injection
           node -e '
             const fs = require("fs");
             const manifestPath = "android/app/src/main/AndroidManifest.xml";
@@ -126,9 +204,8 @@ jobs:
               content = content.replace("android:screenOrientation=\"unspecified\"", "android:screenOrientation=\"" + payload.orientation + "\"");
             }
 
-            if (payload.cleartext) {
-              content = content.replace("<application", "<application android:usesCleartextTraffic=\"true\"");
-            }
+            // HTTP & HTTPS Always Cleartext Allowed
+            content = content.replace("<application", "<application android:usesCleartextTraffic=\"true\"");
 
             fs.writeFileSync(manifestPath, content);
           '
