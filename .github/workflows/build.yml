@@ -55,31 +55,26 @@ jobs:
 
           # 1. URL Source Configuration
           if [ "$SOURCE_TYPE" = "url" ]; then
-            node -e "
-              const fs = require('fs');
-              const cfg = require('../config.json');
-              const capConfig = {
-                appId: cfg.package_name,
-                appName: cfg.app_name,
-                webDir: 'www',
-                server: {
-                  url: cfg.web_url.trim(),
-                  cleartext: true,
-                  androidScheme: 'https',
-                  allowNavigation: ['*']
-                },
-                android: {
-                  allowMixedContent: true,
-                  captureInput: true
-                }
-              };
-              fs.writeFileSync('capacitor.config.json', JSON.stringify(capConfig, null, 2));
-              fs.writeFileSync('www/index.html', '<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><style>body{background:#0b0f19;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;}</style></head><body><div style=\"text-align:center;\"><div style=\"width:40px;height:40px;border:3px solid #38bdf8;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:auto;\"></div><p style=\"margin-top:15px;\">Loading...</p></div><style>@keyframes spin{to{transform:rotate(360deg);}}</style></body></html>');
-            "
+            cat << 'EOF' > www/index.html
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>body{background:#0b0f19;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;}</style>
+            </head>
+            <body>
+              <div style="text-align:center;">
+                <div style="width:40px;height:40px;border:3px solid #38bdf8;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:auto;"></div>
+                <p style="margin-top:15px;">Loading App...</p>
+              </div>
+              <style>@keyframes spin{to{transform:rotate(360deg);}}</style>
+            </body>
+            </html>
+          EOF
           # 2. ZIP Source
           elif [ "$SOURCE_TYPE" = "zip" ] && [ "$HAS_ZIP" = "true" ]; then
             unzip -o ../build_cache/project.zip -d www/
-          # 3. Direct Large HTML File (No payload limit)
+          # 3. Direct HTML File
           elif [ "$SOURCE_TYPE" = "raw_html" ] && [ "$HAS_HTML" = "true" ]; then
             cp ../build_cache/index.html www/index.html
           elif [ "$SOURCE_TYPE" = "raw_html" ]; then
@@ -94,68 +89,85 @@ jobs:
 
           npx cap add android
 
-      - name: Force Native In-App Engine & Back Button
+      - name: Force Pure Native In-App WebView Architecture
         run: |
           cd workspace
-          
-          # Native In-App WebView Logic ని MainActivity లోకి రాయడం
+
+          SOURCE_TYPE=$(node -p "require('../config.json').source_type")
+          TARGET_URL=$(node -p "require('../config.json').web_url || ''")
           PKG_PATH=$(node -p "require('../config.json').package_name.replace(/\./g, '/')")
           TARGET_FILE="android/app/src/main/java/${PKG_PATH}/MainActivity.java"
           PKG_NAME=$(node -p "require('../config.json').package_name")
 
-          cat << EOF > "$TARGET_FILE"
+          if [ "$SOURCE_TYPE" = "url" ]; then
+            echo "Injecting Pure In-App Native Engine into MainActivity..."
+            cat << EOF > "$TARGET_FILE"
           package ${PKG_NAME};
 
           import android.os.Bundle;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
           import android.webkit.WebSettings;
+          import android.webkit.WebChromeClient;
           import android.content.Intent;
           import android.net.Uri;
-          import com.getcapacitor.BridgeActivity;
+          import androidx.appcompat.app.AppCompatActivity;
 
-          public class MainActivity extends BridgeActivity {
+          public class MainActivity extends AppCompatActivity {
+              private WebView webView;
+
               @Override
-              public void onResume() {
-                  super.onResume();
-                  if (this.bridge != null && this.bridge.getWebView() != null) {
-                      WebView webView = this.bridge.getWebView();
-                      WebSettings settings = webView.getSettings();
-                      settings.setJavaScriptEnabled(true);
-                      settings.setDomStorageEnabled(true);
-                      settings.setDatabaseEnabled(true);
-                      settings.setAllowFileAccess(true);
-                      settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
 
-                      webView.setWebViewClient(new WebViewClient() {
-                          @Override
-                          public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                              if (url.startsWith("http://") || url.startsWith("https://")) {
-                                  view.loadUrl(url);
-                                  return true;
-                              }
-                              try {
-                                  Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                                  view.getContext().startActivity(intent);
-                                  return true;
-                              } catch (Exception e) {
-                                  return true;
-                              }
+                  webView = new WebView(this);
+                  setContentView(webView);
+
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  settings.setDatabaseEnabled(true);
+                  settings.setAllowFileAccess(true);
+                  settings.setLoadsImagesAutomatically(true);
+                  settings.setUseWideViewPort(true);
+                  settings.setLoadWithOverviewMode(true);
+                  settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                  settings.setUserAgentString(settings.getUserAgentString() + " EnterpriseNativeApp/1.0");
+
+                  webView.setWebChromeClient(new WebChromeClient());
+
+                  // క్రోమ్ బ్రౌజర్‌కు వెళ్లకుండా 100% యాప్ లోపలే ఫోర్స్ చేసే క్లయింట్
+                  webView.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                          if (url.startsWith("http://") || url.startsWith("https://")) {
+                              view.loadUrl(url);
+                              return true;
                           }
-                      });
-                  }
+                          try {
+                              Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                              startActivity(intent);
+                              return true;
+                          } catch (Exception e) {
+                              return true;
+                          }
+                      }
+                  });
+
+                  webView.loadUrl("${TARGET_URL}");
               }
 
               @Override
               public void onBackPressed() {
-                  if (this.bridge != null && this.bridge.getWebView() != null && this.bridge.getWebView().canGoBack()) {
-                      this.bridge.getWebView().goBack();
+                  if (webView != null && webView.canGoBack()) {
+                      webView.goBack();
                   } else {
                       super.onBackPressed();
                   }
               }
           }
           EOF
+          fi
 
       - name: Configure App Icon & Fix AndroidManifest
         run: |
