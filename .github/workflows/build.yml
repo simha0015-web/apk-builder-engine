@@ -43,6 +43,7 @@ jobs:
           PKG_NAME=$(node -p "require('./config.json').package_name")
           SOURCE_TYPE=$(node -p "require('./config.json').source_type")
           HAS_ZIP=$(node -p "require('./config.json').has_custom_zip")
+          HAS_HTML=$(node -p "require('./config.json').has_custom_html")
 
           mkdir -p workspace
           cd workspace
@@ -52,7 +53,7 @@ jobs:
           npx cap init "$APP_NAME" "$PKG_NAME" --web-dir "www"
           mkdir -p www
 
-          # ఏ వెబ్‌సైట్ ఇచ్చినా నేటివ్ యాప్‌గా మార్చే యూనివర్సల్ కాన్ఫిగరేషన్
+          # 1. URL Source Configuration
           if [ "$SOURCE_TYPE" = "url" ]; then
             node -e "
               const fs = require('fs');
@@ -75,13 +76,19 @@ jobs:
               fs.writeFileSync('capacitor.config.json', JSON.stringify(capConfig, null, 2));
               fs.writeFileSync('www/index.html', '<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><style>body{background:#0b0f19;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;}</style></head><body><div style=\"text-align:center;\"><div style=\"width:40px;height:40px;border:3px solid #38bdf8;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:auto;\"></div><p style=\"margin-top:15px;\">Loading...</p></div><style>@keyframes spin{to{transform:rotate(360deg);}}</style></body></html>');
             "
+          # 2. ZIP Source
           elif [ "$SOURCE_TYPE" = "zip" ] && [ "$HAS_ZIP" = "true" ]; then
             unzip -o ../build_cache/project.zip -d www/
+          # 3. Direct Large HTML File (No payload limit)
+          elif [ "$SOURCE_TYPE" = "raw_html" ] && [ "$HAS_HTML" = "true" ]; then
+            cp ../build_cache/index.html www/index.html
           elif [ "$SOURCE_TYPE" = "raw_html" ]; then
             node -e "
               const fs = require('fs');
               const cfg = require('../config.json');
-              fs.writeFileSync('www/index.html', cfg.html_content);
+              if (cfg.html_content) {
+                fs.writeFileSync('www/index.html', cfg.html_content);
+              }
             "
           fi
 
@@ -91,7 +98,7 @@ jobs:
         run: |
           cd workspace
           
-          # Native In-App WebView Logic ని MainActivity లోకి సురక్షితంగా రాయడం
+          # Native In-App WebView Logic ని MainActivity లోకి రాయడం
           PKG_PATH=$(node -p "require('../config.json').package_name.replace(/\./g, '/')")
           TARGET_FILE="android/app/src/main/java/${PKG_PATH}/MainActivity.java"
           PKG_NAME=$(node -p "require('../config.json').package_name")
