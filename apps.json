@@ -18,5 +18,15 @@
     "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v2/exhaust---rtu-debug.apk",
     "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v2/exhaust---rtu-release.aab",
     "updated_at": "2026-09-29T09:22:13.516Z"
+  },
+  {
+    "name": "My finance manager",
+    "package_name": "com.myfinancemanager.app",
+    "version": "1.0.0",
+    "version_code": 1,
+    "source_type": "raw_html",
+    "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-my-finance-manager-v1/my-finance-manager-debug.apk",
+    "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-my-finance-manager-v1/my-finance-manager-release.aab",
+    "updated_at": "2026-09-29T11:02:32.913Z"
   }
 ]
