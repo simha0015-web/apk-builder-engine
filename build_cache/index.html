@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>My Finance Manager v2 - Sidebar Edition</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;background:#f4f6f9;color:#222}
+
+/* Header & Hamburger */
+header{background:#1565c0;color:#fff;padding:12px 16px;position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;box-shadow:0 2px 6px rgba(0,0,0,0.15)}
+.menu-btn{background:transparent;border:0;color:#fff;font-size:24px;cursor:pointer;padding:4px 8px;width:auto;line-height:1}
+header h2{margin:0;font-size:18px;font-weight:600}
+header small{opacity:.9;font-size:12px;display:block}
+
+/* Layout with Sidebar */
+.app-layout{display:flex;min-height:calc(100vh - 56px)}
+.sidebar{width:250px;background:#fff;border-right:1px solid #e0e0e0;display:flex;flex-direction:column;flex-shrink:0;transition:transform .3s ease;z-index:30}
+.sidebar-header{padding:16px;border-bottom:1px solid #eee;font-weight:bold;color:#1565c0;display:flex;justify-content:space-between;align-items:center}
+.sidebar-close{display:none;background:transparent;border:0;font-size:20px;color:#666;cursor:pointer;width:auto;padding:0}
+.sidebar-nav{display:flex;flex-direction:column;padding:8px 0}
+.sidebar-nav button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 18px;background:#fff;color:#444;border:0;border-radius:0;font-size:14px;font-weight:600;text-align:left;cursor:pointer;border-left:4px solid transparent}
+.sidebar-nav button:hover{background:#f0f4f8}
+.sidebar-nav button.active{background:#e3f2fd;color:#1565c0;border-left-color:#1565c0}
+.sidebar-nav button span.icon{font-size:18px;width:24px;text-align:center}
+
+/* Content Area */
+.main-content{flex:1;padding:16px;max-width:980px;margin:0 auto;width:100%}
+.page{display:none}
+.page.active{display:block}
+
+/* Grid & Cards */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.card h3{margin:0 0 10px;font-size:16px}
+.stat{font-size:20px;font-weight:bold}
+.blue{color:#1565c0}.red{color:#d32f2f}.green{color:#2e7d32}.orange{color:#ef6c00}
+input,select,button{width:100%;padding:11px;margin:5px 0;border:1px solid #ccc;border-radius:8px;font-size:14px;font-family:inherit}
+input:focus,select:focus{border-color:#1565c0;outline:none}
+button{background:#1565c0;color:#fff;border:0;font-weight:bold;cursor:pointer;transition:background .2s}
+button:active{opacity:.9}
+button.secondary{background:#607d8b}
+button.danger{background:#d32f2f}
+button.greenbtn{background:#2e7d32}
+button.editbtn{background:#ff9800}
+button.closebtn{background:#00897b}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 6px;border-bottom:1px solid #eee;text-align:left;vertical-align:middle}
+.scroll{overflow-x:auto}
+.badge{display:inline-block;padding:4px 8px;border-radius:15px;background:#e3f2fd;color:#1565c0;font-size:12px;font-weight:bold}
+.badge-pending{background:#ffebee;color:#c62828}
+.badge-paid{background:#e8f5e9;color:#2e7d32}
+.progress{height:12px;background:#ddd;border-radius:20px;overflow:hidden;margin:8px 0}
+.progress>div{height:100%;background:#2e7d32}
+.loss-box{background:#ffebee;border:1px solid #ffcdd2;padding:12px;border-radius:8px;margin:10px 0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;padding:14px;z-index:50}
+.modalbox{background:#fff;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;border-radius:15px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.muted{color:#666;font-size:12px}
+.tab-btns{display:flex;gap:8px;margin-bottom:12px}
+.tab-btns button{flex:1;background:#e0e0e0;color:#333;margin:0}
+.tab-btns button.active{background:#1565c0;color:#fff}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:25}
+
+/* Responsive Drawer for Mobile */
+@media(max-width:768px){
+  .sidebar{position:fixed;top:0;bottom:0;left:0;transform:translateX(-100%);box-shadow:2px 0 10px rgba(0,0,0,0.2)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-close{display:block}
+  .sidebar-overlay.active{display:block}
+  .grid, .grid-3{grid-template-columns:1fr}
+  .row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+  <div>
+    <h2>💰 My Finance Manager</h2>
+    <small>Personal Loans & Hand Loans Tracker</small>
+  </div>
+</header>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span>మెనూ నావిగేషన్</span>
+      <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="active" onclick="page('dashboard', this)"><span class="icon">🏠</span> Home</button>
+      <button onclick="page('loans', this)"><span class="icon">💳</span> Loans</button>
+      <button onclick="page('handloans', this)"><span class="icon">🤝</span> Hand Loans</button>
+      <button onclick="page('salaries', this)"><span class="icon">💵</span> Salary</button>
+      <button onclick="page('payments', this)"><span class="icon">💸</span> Payments</button>
+      <button onclick="page('expenses', this)"><span class="icon">🧾</span> Expenses</button>
+      <button onclick="page('reports', this)"><span class="icon">📊</span> Reports</button>
+      <button onclick="page('settings', this)"><span class="icon">⚙️</span> Settings</button>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <!-- DASHBOARD PAGE -->
+    <section id="dashboard" class="page active">
+      <!-- శాలరీ ఓవర్‌వ్యూ (మొత్తం వచ్చిన శాలరీ & ఈ నెల శాలరీ) -->
+      <div class="card" style="border-left:5px solid #2e7d32;">
+        <h3 style="margin:0 0 10px;color:#2e7d32;">💵 శాలరీ సారాంశం (Salary Overview)</h3>
+        <div class="grid">
+          <div style="background:#e8f5e9;padding:12px;border-radius:10px;">
+            <small class="muted" style="color:#2e7d32;font-weight:bold;">ఇంతవరకు వచ్చిన మొత్తం శాలరీ (All Time)</small>
+            <div id="vAllTimeSalary" class="stat green" style="font-size:24px;">₹0</div>
+          </div>
+          <div style="background:#e3f2fd;padding:12px;border-radius:10px;">
+            <small class="muted" style="color:#1565c0;font-weight:bold;">ప్రస్తుత నెల శాలరీ (This Month)</small>
+            <div id="vSalary" class="stat blue" style="font-size:24px;">₹0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- బ్యాంక్ లోన్స్ సారాంశం -->
+      <div class="card" style="border-left:5px solid #1565c0;">
+        <h3 style="margin:0 0 10px;color:#1565c0;">💳 బ్యాంక్ లోన్స్ సారాంశం (Bank Loans)</h3>
+        <div class="grid-3">
+          <div style="background:#e8f5e9;padding:10px;border-radius:10px;">
+            <small class="muted" style="color:#2e7d32;font-weight:bold;">చేతికి వచ్చిన నగదు</small>
+            <div id="vTotalReceived" class="stat green">₹0</div>
+          </div>
+          <div style="background:#ffebee;padding:10px;border-radius:10px;">
+            <small class="muted" style="color:#c62828;font-weight:bold;">కట్టాల్సిన లోన్ బాకీ</small>
+            <div id="vDebt" class="stat red">₹0</div>
+          </div>
+          <div style="background:#fff3e0;padding:10px;border-radius:10px;">
+            <small class="muted" style="color:#e65100;font-weight:bold;">మొత్తం లోన్స్ నష్టం</small>
+            <div id="vTotalLoss" class="stat orange">₹0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- బయట వ్యక్తుల చేతిబదులు సారాంశం -->
+      <div class="card" style="border-left:5px solid #673ab7;">
+        <h3 style="margin:0 0 10px;color:#673ab7;">🤝 బయట వ్యక్తుల చేతిబదులు (Hand Loans)</h3>
+        <div class="grid">
+          <div style="background:#ffebee;padding:10px;border-radius:10px;">
+            <small class="muted" style="color:#c62828;font-weight:bold;">మనం తీసుకున్నవి (ఇవ్వాలి)</small>
+            <div id="vHandPayable" class="stat red">₹0</div>
+          </div>
+          <div style="background:#e8f5e9;padding:10px;border-radius:10px;">
+            <small class="muted" style="color:#2e7d32;font-weight:bold;">మనం ఇచ్చినవి (రావాలి)</small>
+            <div id="vHandReceivable" class="stat green">₹0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ప్రస్తుత నెల ఖర్చులు & నగదు పరిస్థితి -->
+      <div class="grid">
+        <div class="card"><small>ఈ నెల EMI చెల్లింపులు</small><div id="vPay" class="stat red"></div></div>
+        <div class="card"><small>ఈ నెల ఇతర ఖర్చులు</small><div id="vExp" class="stat orange"></div></div>
+      </div>
+      <div class="card" style="margin-top:-2px;">
+        <small>ఈ నెల ఖర్చులు & EMIలు పోగా మిగిలే నికర నగదు (Remaining Cash)</small>
+        <div id="cfBalCard" class="stat green" style="font-size:24px;margin-top:4px;"></div>
+      </div>
+
+      <div class="card">
+        <h3>🎯 బ్యాంక్ లోన్స్ ప్రగతి</h3>
+        <div class="progress"><div id="debtBar"></div></div>
+        <p id="debtText" class="muted"></p>
+      </div>
+    </section>
+
+    <!-- PERSONAL HAND LOANS PAGE -->
+    <section id="handloans" class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;">🤝 బయట వ్యక్తులతో లేవాదేవీలు (Hand Loans)</h3>
+          <button style="width:auto;padding:8px 16px;" class="greenbtn" onclick="openModal('handLoanModal')">➕ Add Transaction</button>
+        </div>
+      </div>
+      <div id="handLoanList"></div>
+    </section>
+
+    <!-- BANK LOANS PAGE -->
+    <section id="loans" class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;">💳 బ్యాంక్ లోన్స్ వివరాలు</h3>
+          <button style="width:auto;padding:8px 16px;" onclick="openAddLoanModal()">➕ Add Loan</button>
+        </div>
+      </div>
+      <div id="loanList"></div>
+    </section>
+
+    <!-- SALARIES PAGE -->
+    <section id="salaries" class="page">
+      <div class="card">
+        <h3>💵 వార్షిక శాలరీ లెక్కలు</h3>
+        <div class="row">
+          <div>
+            <label class="muted">సంవత్సరం ఎంచుకోండి</label>
+            <input id="salaryYear" type="number" min="2020" max="2035" step="1" onchange="renderSalaries()">
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="greenbtn" onclick="openModal('salaryModal')">➕ Add Salary</button>
+          </div>
+        </div>
+      </div>
+      <div id="salaryList"></div>
+    </section>
+
+    <!-- PAYMENTS PAGE -->
+    <section id="payments" class="page">
+      <div class="card">
+        <h3>📅 వార్షిక లోన్ EMI చెల్లింపులు</h3>
+        <div class="row">
+          <div>
+            <label class="muted">సంవత్సరం ఎంచుకోండి</label>
+            <input id="paymentYear" type="number" min="2020" max="2035" step="1" onchange="renderPayments()">
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button onclick="openPaymentModal()">➕ Add Payment</button>
+          </div>
+        </div>
+      </div>
+      <div id="paymentList"></div>
+    </section>
+
+    <!-- EXPENSES PAGE -->
+    <section id="expenses" class="page">
+      <div class="card">
+        <h3>🧾 వార్షిక ఖర్చుల రికార్డు</h3>
+        <div class="row">
+          <div>
+            <label class="muted">సంవత్సరం ఎంచుకోండి</label>
+            <input id="expenseYear" type="number" min="2020" max="2035" step="1" onchange="renderExpenses()">
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button onclick="openModal('expenseModal')">➕ Add Expense</button>
+          </div>
+        </div>
+      </div>
+      <div id="expenseList"></div>
+    </section>
+
+    <!-- REPORTS PAGE -->
+    <section id="reports" class="page">
+      <div class="card">
+        <h3>📊 ఆర్థిక నివేదికలు</h3>
+        <div class="tab-btns">
+          <button id="tabMonthly" class="active" onclick="switchReportTab('monthly')">నెలవారీ రిపోర్ట్</button>
+          <button id="tabYearly" onclick="switchReportTab('yearly')">వార్షిక రిపోర్ట్</button>
+        </div>
+        <div id="monthlyControls" class="row">
+          <input id="reportMonth" type="month" onchange="renderReport()">
+        </div>
+        <div id="yearlyControls" class="row" style="display:none;">
+          <input id="reportYear" type="number" min="2020" max="2035" step="1" onchange="renderReport()">
+        </div>
+        <div id="reportBox" style="margin-top:12px;"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS PAGE -->
+    <section id="settings" class="page">
+      <div class="card">
+        <h3>💾 డేటా బ్యాకప్ & రీస్టోర్</h3>
+        <p class="muted">మీ డేటా మీ ఫోన్ బ్రౌజర్‌లోనే భద్రంగా ఉంటుంది. బ్యాకప్ ఫైల్ డౌన్‌లోడ్ చేసుకోవచ్చు.</p>
+        <button class="greenbtn" onclick="backup()">💾 Export Backup (డౌన్‌లోడ్)</button>
+        <input id="restoreFile" type="file" accept=".json" style="margin-top:10px;">
+        <button class="secondary" onclick="restore()">📂 Restore Backup (అప్‌లోడ్)</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL: ADD HAND LOAN -->
+<div id="handLoanModal" class="modal">
+  <div class="modalbox">
+    <h3>🤝 చేతిబదులు నమోదు చేయండి</h3>
+    <label class="muted">లావాదేవీ రకం:</label>
+    <select id="hlType">
+      <option value="borrowed">తీసుకున్నాను (I Borrowed - తిరిగి ఇవ్వాలి)</option>
+      <option value="lent">ఇచ్చాను (I Lent - మనకు రావాలి)</option>
+    </select>
+    <label class="muted">వ్యక్తి పేరు:</label>
+    <input id="hlPerson" placeholder="ఉదా: రమేష్">
+    <label class="muted">మొత్తం నగదు:</label>
+    <input id="hlAmount" type="number" placeholder="ఉదా: 10000">
+    <label class="muted">తేదీ:</label>
+    <input id="hlDate" type="date">
+    <label class="muted">వివరణ:</label>
+    <input id="hlNote" placeholder="ఉదా: చేతిబదులు">
+    <button class="greenbtn" onclick="addHandLoan()">సేవ్ చేయి</button>
+    <button class="secondary" onclick="closeModal('handLoanModal')">రద్దు</button>
+  </div>
+</div>
+
+<!-- MODAL: ADD/EDIT BANK LOAN -->
+<div id="loanModal" class="modal">
+  <div class="modalbox">
+    <h3 id="loanModalTitle">➕ Add Bank Loan</h3>
+    <input type="hidden" id="editLoanIndex" value="-1">
+    <label class="muted">లోన్ పేరు</label>
+    <input id="lName" placeholder="ఉదా: KreditBee">
+    <div class="row">
+      <div>
+        <label class="muted">అప్లై చేసిన అమౌంట్</label>
+        <input id="lAmount" type="number" placeholder="ఉదా: 53000">
+      </div>
+      <div>
+        <label class="muted">చేతికి వచ్చిన మొత్తం</label>
+        <input id="lReceived" type="number" placeholder="ఉదా: 48500">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label class="muted">నెలవారీ EMI</label>
+        <input id="lEmi" type="number" placeholder="ఉదా: 5015">
+      </div>
+      <div>
+        <label class="muted">మొత్తం నెలలు (Tenure)</label>
+        <input id="lTenure" type="number" placeholder="ఉదా: 12">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label class="muted">తీసుకున్న తేదీ</label>
+        <input id="lStart" type="date">
+      </div>
+      <div>
+        <label class="muted">ముగిసే తేదీ</label>
+        <input id="lEnd" type="date">
+      </div>
+    </div>
+    <button onclick="saveLoan()">సేవ్ చేయి</button>
+    <button class="secondary" onclick="closeModal('loanModal')">రద్దు</button>
+  </div>
+</div>
+
+<!-- MODAL: RECORD SALARY -->
+<div id="salaryModal" class="modal">
+  <div class="modalbox">
+    <h3>💵 Record Salary</h3>
+    <label class="muted">తేదీ</label>
+    <input id="sDate" type="date">
+    <label class="muted">శాలరీ మొత్తం</label>
+    <input id="sAmount" type="number" placeholder="ఉదా: 19400">
+    <label class="muted">వివరణ</label>
+    <input id="sNote" placeholder="ఉదా: September Salary">
+    <button class="greenbtn" onclick="addSalary()">సేవ్ చేయి</button>
+    <button class="secondary" onclick="closeModal('salaryModal')">రద్దు</button>
+  </div>
+</div>
+
+<!-- MODAL: RECORD PAYMENT -->
+<div id="paymentModal" class="modal">
+  <div class="modalbox">
+    <h3>💸 Record Loan Payment (EMI)</h3>
+    <label class="muted">లోన్ ఎంచుకోండి</label>
+    <select id="pLoan" onchange="autoFillPaymentValues()"></select>
+    <label class="muted">చెల్లించిన తేదీ</label>
+    <input id="pDate" type="date">
+    <label class="muted">కట్టిన EMI అమౌంట్:</label>
+    <input id="pAmount" type="number" placeholder="ఉదా: 5015">
+    <div id="payStatusFeedback" style="font-size:12px;color:#1565c0;font-weight:bold;margin:6px 0;"></div>
+    <label class="muted">చెల్లింపు విధానం</label>
+    <select id="pMode">
+      <option>Auto Debit</option>
+      <option>UPI / PhonePe / GPay</option>
+      <option>Net Banking</option>
+      <option>Cash</option>
+      <option>Other</option>
+    </select>
+    <label class="muted">నోట్</label>
+    <input id="pNote" placeholder="ఉదా: EMI Payment">
+    <button onclick="addPayment()">సేవ్ చేయి</button>
+    <button class="secondary" onclick="closeModal('paymentModal')">రద్దు</button>
+  </div>
+</div>
+
+<!-- MODAL: RECORD EXPENSE -->
+<div id="expenseModal" class="modal">
+  <div class="modalbox">
+    <h3>🧾 Record Expense</h3>
+    <label class="muted">తేదీ</label>
+    <input id="eDate" type="date">
+    <label class="muted">కేటగిరీ</label>
+    <select id="eCategory">
+      <option>Home Expenses</option>
+      <option>Bike / Petrol</option>
+      <option>Vehicle Maintenance</option>
+      <option>Groceries / Food</option>
+      <option>Medical</option>
+      <option>Shopping</option>
+      <option>Bills & Utilities</option>
+      <option>Other</option>
+    </select>
+    <label class="muted">ఖర్చు మొత్తం</label>
+    <input id="eAmount" type="number" placeholder="ఉదా: 450">
+    <label class="muted">వివరణ</label>
+    <input id="eNote" placeholder="ఉదా: Petrol">
+    <button onclick="addExpense()">సేవ్ చేయి</button>
+    <button class="secondary" onclick="closeModal('expenseModal')">రద్దు</button>
+  </div>
+</div>
+
+<script>
+const today = new Date();
+const ym = today.toISOString().slice(0, 7);
+const yyyy = today.getFullYear().toString();
+const iso = today.toISOString().slice(0, 10);
+let currentReportType = 'monthly';
+
+let data = JSON.parse(localStorage.getItem("myFinanceV2") || "null") || {
+  salaries: [
+    { date: "2026-09-01", amount: 19400, note: "September Salary" }
+  ],
+  loans: [
+    { 
+      name: "KreditBee", 
+      amount: 53000, 
+      received: 48600, 
+      emi: 5015, 
+      tenure: 12, 
+      start: "2026-08-14", 
+      end: "2027-08-08" 
+    }
+  ],
+  payments: [
+    { loanId: 0, date: "2026-09-08", amount: 5015, mode: "Auto Debit", note: "EMI #1" }
+  ],
+  handLoans: [
+    { type: "borrowed", person: "రమేష్", amount: 15000, date: "2026-08-10", settled: false, note: "అవసరం కోసం తీసుకున్నాను" }
+  ],
+  expenses: []
+};
+
+if(!data.handLoans) data.handLoans = [];
+
+function toggleSidebar(){
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("sidebarOverlay").classList.toggle("active");
+}
+
+function closeSidebar(){
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("active");
+}
+
+function page(id, b) {
+  document.querySelectorAll(".page").forEach(x => x.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".sidebar-nav button").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  closeSidebar();
+  renderAll();
+}
+
+function save() {
+  localStorage.setItem("myFinanceV2", JSON.stringify(data));
+  renderAll();
+}
+
+function money(n) {
+  return "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
+}
+
+function openModal(id) {
+  document.getElementById(id).style.display = "flex";
+  if (id === "salaryModal") document.getElementById("sDate").value = iso;
+  if (id === "expenseModal") document.getElementById("eDate").value = iso;
+  if (id === "handLoanModal") document.getElementById("hlDate").value = iso;
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = "none";
+}
+
+function openPaymentModal() {
+  populateSelects();
+  document.getElementById("pDate").value = iso;
+  autoFillPaymentValues();
+  openModal('paymentModal');
+}
+
+function populateSelects() {
+  document.getElementById("pLoan").innerHTML = data.loans.map((l, i) => `<option value="${i}">${l.name}</option>`).join("");
+}
+
+function totalSalaryAllTime() {
+  return (data.salaries || []).reduce((a, s) => a + Number(s.amount || 0), 0);
+}
+
+function totalSalary(filterStr) {
+  return data.salaries.filter(s => s.date.startsWith(filterStr)).reduce((a, s) => a + Number(s.amount), 0);
+}
+
+function totalPayments(filterStr) {
+  return data.payments.filter(p => p.date.startsWith(filterStr)).reduce((a, p) => a + Number(p.amount), 0);
+}
+
+function totalExpenses(filterStr) {
+  return data.expenses.filter(e => e.date.startsWith(filterStr)).reduce((a, e) => a + Number(e.amount), 0);
+}
+
+function getLoanDetails(i) {
+  let l = data.loans[i];
+  let pList = data.payments.filter(p => Number(p.loanId) === i).sort((a, b) => a.date.localeCompare(b.date));
+
+  let totalPaidAmount = pList.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  let paidCount = pList.length;
+
+  let totalTenureMonths = Number(l.tenure || 0);
+  if (totalTenureMonths <= 0 && l.start && l.end) {
+    let s = new Date(l.start), e = new Date(l.end);
+    totalTenureMonths = Math.round((e - s) / (1000 * 60 * 60 * 24 * 30.4375));
+    if (totalTenureMonths <= 0) {
+      totalTenureMonths = Math.max(0, (e.getFullYear() - s.getFullYear()) * 12 + (e.getMonth() - s.getMonth()));
+    }
+  }
+
+  let totalPayableAmount = Number(l.emi || 0) * (totalTenureMonths || 1);
+  if(totalPayableAmount <= 0) totalPayableAmount = Number(l.amount || 0);
+
+  let appliedAmount = Number(l.amount || 0);
+  let receivedAmount = Number(l.received || appliedAmount);
+
+  let totalLoss = Math.max(0, totalPayableAmount - receivedAmount);
+  let feeLoss = Math.max(0, appliedAmount - receivedAmount);
+  let interestLoss = Math.max(0, totalPayableAmount - appliedAmount);
+
+  let remainingPayable = Math.max(0, totalPayableAmount - totalPaidAmount);
+  let pendingMonths = 0;
+  if(remainingPayable > 0 && totalTenureMonths > 0) {
+    pendingMonths = Math.max(0, totalTenureMonths - paidCount);
+  }
+
+  let progress = totalPayableAmount > 0 ? Math.min(100, (totalPaidAmount / totalPayableAmount) * 100) : 0;
+
+  return {
+    name: l.name,
+    appliedAmount,
+    receivedAmount,
+    totalPayableAmount,
+    totalLoss,
+    feeLoss,
+    interestLoss,
+    emi: Number(l.emi || 0),
+    start: l.start || "చెప్పలేదు",
+    end: l.end || "చెప్పలేదు",
+    totalTenureMonths,
+    paidCount,
+    pendingMonths,
+    totalPaidAmount,
+    remainingPayable,
+    progress,
+    pList
+  };
+}
+
+function totalDebt() {
+  return data.loans.reduce((acc, l, i) => acc + getLoanDetails(i).remainingPayable, 0);
+}
+
+function totalReceivedAll() {
+  return data.loans.reduce((acc, l, i) => acc + getLoanDetails(i).receivedAmount, 0);
+}
+
+function totalLossAll() {
+  return data.loans.reduce((acc, l, i) => acc + getLoanDetails(i).totalLoss, 0);
+}
+
+function addHandLoan() {
+  let p = document.getElementById("hlPerson").value.trim();
+  let a = Number(document.getElementById("hlAmount").value);
+  let type = document.getElementById("hlType").value;
+  let d = document.getElementById("hlDate").value || iso;
+  let note = document.getElementById("hlNote").value.trim();
+
+  if (!p || !a) return alert("వ్యక్తి పేరు మరియు మొత్తం నమోదు చేయండి");
+
+  data.handLoans.push({
+    type,
+    person: p,
+    amount: a,
+    date: d,
+    settled: false,
+    note
+  });
+
+  save();
+  closeModal("handLoanModal");
+  document.getElementById("hlPerson").value = "";
+  document.getElementById("hlAmount").value = "";
+  document.getElementById("hlNote").value = "";
+}
+
+function toggleHandLoanSettled(idx) {
+  data.handLoans[idx].settled = !data.handLoans[idx].settled;
+  save();
+}
+
+function renderHandLoans() {
+  let list = document.getElementById("handLoanList");
+  if (!data.handLoans || data.handLoans.length === 0) {
+    list.innerHTML = `<div class="card">ప్రస్తుతం ఎలాంటి చేతిబదులు రికార్డులు లేవు.</div>`;
+    return;
+  }
+
+  let html = data.handLoans.map((h, idx) => {
+    let isBorrowed = h.type === "borrowed";
+    return `
+    <div class="card" style="border-left: 5px solid ${isBorrowed ? '#d32f2f' : '#2e7d32'};">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;">${h.person}</h3>
+        <span class="badge ${h.settled ? 'badge-paid' : 'badge-pending'}">${h.settled ? '✅ క్లియర్ అయింది' : '⏳ బాకీ ఉంది'}</span>
+      </div>
+      <table style="margin-top:8px;">
+        <tr><td>లావాదేవీ:</td><td><b class="${isBorrowed ? 'red' : 'green'}">${isBorrowed ? 'తీసుకున్నాను (తిరిగి ఇవ్వాలి)' : 'ఇచ్చాను (మనకు రావాలి)'}</b></td></tr>
+        <tr><td>మొత్తం:</td><td><b style="font-size:15px;">${money(h.amount)}</b></td></tr>
+        <tr><td>తేదీ:</td><td>${h.date}</td></tr>
+        <tr><td>వివరణ:</td><td>${h.note || "-"}</td></tr>
+      </table>
+      <div class="row" style="margin-top:10px;">
+        <button class="${h.settled ? 'secondary' : 'closebtn'}" onclick="toggleHandLoanSettled(${idx})">
+          ${h.settled ? 'తిరిగి ఓపెన్ చేయి' : 'లెక్క క్లియర్ (Settle)'}
+        </button>
+        <button class="danger" onclick="del('handLoan', ${idx})">🗑️ Delete</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  list.innerHTML = html;
+}
+
+function autoFillPaymentValues() {
+  let idx = Number(document.getElementById("pLoan").value || 0);
+  let l = data.loans[idx];
+  if (!l) return;
+  let d = getLoanDetails(idx);
+  let defaultEmi = Number(l.emi || 0);
+  document.getElementById("pAmount").value = defaultEmi > 0 ? defaultEmi : "";
+  document.getElementById("payStatusFeedback").innerHTML = 
+    `ప్రస్తుత బాకీ: ${money(d.remainingPayable)} | మిగిలినవి: ${d.pendingMonths} నెలలు`;
+}
+
+function openAddLoanModal() {
+  document.getElementById("loanModalTitle").innerText = "➕ Add Bank Loan";
+  document.getElementById("editLoanIndex").value = "-1";
+  document.getElementById("lName").value = "";
+  document.getElementById("lAmount").value = "";
+  document.getElementById("lReceived").value = "";
+  document.getElementById("lEmi").value = "";
+  document.getElementById("lTenure").value = "";
+  document.getElementById("lStart").value = "";
+  document.getElementById("lEnd").value = "";
+  openModal('loanModal');
+}
+
+function saveLoan() {
+  let n = document.getElementById("lName").value.trim();
+  let a = Number(document.getElementById("lAmount").value);
+  let rec = Number(document.getElementById("lReceived").value || a);
+  let e = Number(document.getElementById("lEmi").value);
+  let t = Number(document.getElementById("lTenure").value || 0);
+  let editIdx = parseInt(document.getElementById("editLoanIndex").value);
+
+  if (!n || !a || !e) return alert("వివరాలన్నీ నమోదు చేయండి");
+
+  let loanObj = {
+    name: n,
+    amount: a,
+    received: rec,
+    emi: e,
+    tenure: t,
+    start: document.getElementById("lStart").value,
+    end: document.getElementById("lEnd").value
+  };
+
+  if (editIdx >= 0) {
+    data.loans[editIdx] = loanObj;
+  } else {
+    data.loans.push(loanObj);
+  }
+  save();
+  closeModal("loanModal");
+}
+
+function addSalary() {
+  let a = Number(document.getElementById("sAmount").value);
+  if (!a) return alert("శాలరీ నమోదు చేయండి");
+  data.salaries.push({
+    date: document.getElementById("sDate").value || iso,
+    amount: a,
+    note: document.getElementById("sNote").value.trim()
+  });
+  save();
+  closeModal("salaryModal");
+  document.getElementById("sAmount").value = "";
+  document.getElementById("sNote").value = "";
+}
+
+function addPayment() {
+  let i = Number(document.getElementById("pLoan").value);
+  let amt = Number(document.getElementById("pAmount").value);
+  if (!amt) return alert("EMI మొత్తం నమోదు చేయండి");
+
+  data.payments.push({
+    loanId: i,
+    date: document.getElementById("pDate").value || iso,
+    amount: amt,
+    mode: document.getElementById("pMode").value,
+    note: document.getElementById("pNote").value.trim()
+  });
+
+  save();
+  closeModal("paymentModal");
+}
+
+function addExpense() {
+  let a = Number(document.getElementById("eAmount").value);
+  if (!a) return alert("ఖర్చు నమోదు చేయండి");
+  data.expenses.push({
+    date: document.getElementById("eDate").value || iso,
+    category: document.getElementById("eCategory").value,
+    amount: a,
+    note: document.getElementById("eNote").value.trim()
+  });
+  save();
+  closeModal("expenseModal");
+  document.getElementById("eAmount").value = "";
+  document.getElementById("eNote").value = "";
+}
+
+function del(type, i) {
+  if (!confirm("ఈ రికార్డును ఖచ్చితంగా తొలగించాలనుకుంటున్నారా?")) return;
+  if (type === "loan") {
+    data.loans.splice(i, 1);
+    data.payments = data.payments.filter(p => Number(p.loanId) !== i).map(p => ({
+      ...p,
+      loanId: Number(p.loanId) > i ? Number(p.loanId) - 1 : p.loanId
+    }));
+  } else if (type === "payment") {
+    data.payments.splice(i, 1);
+  } else if (type === "salary") {
+    data.salaries.splice(i, 1);
+  } else if (type === "handLoan") {
+    data.handLoans.splice(i, 1);
+  } else {
+    data.expenses.splice(i, 1);
+  }
+  save();
+}
+
+function renderLoans() {
+  document.getElementById("loanList").innerHTML = data.loans.map((l, i) => {
+    let d = getLoanDetails(i);
+
+    return `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;color:#1565c0;">${d.name}</h3>
+        <span class="badge ${d.remainingPayable <= 0 ? 'badge-paid' : 'badge-pending'}">
+          ${d.remainingPayable <= 0 ? '✅ తీరిపోయింది' : '⏳ నడుస్తున్నది'}
+        </span>
+      </div>
+
+      <div class="loss-box">
+        <div style="font-weight:bold;color:#c62828;font-size:15px;margin-bottom:4px;">
+          🚨 ఈ లోన్ వల్ల మొత్తం నష్టం: ${money(d.totalLoss)}
+        </div>
+        <div style="font-size:12px;color:#555;">
+          • ప్రాసెసింగ్ ఫీజులు: <b>${money(d.feeLoss)}</b> | • వడ్డీ నష్టం: <b>${money(d.interestLoss)}</b>
+        </div>
+      </div>
+
+      <table style="margin-top:10px;">
+        <tr style="background:#e3f2fd;"><td><b>1. అప్లై చేసిన మొత్తం:</b></td><td><b class="blue">${money(d.appliedAmount)}</b></td></tr>
+        <tr style="background:#e8f5e9;"><td><b>2. చేతికి వచ్చిన అమౌంట్:</b></td><td><b class="green">${money(d.receivedAmount)}</b></td></tr>
+        <tr style="background:#fff3e0;"><td><b>3. మొత్తం కట్టాల్సినది:</b></td><td><b class="orange">${money(d.totalPayableAmount)}</b></td></tr>
+        <tr><td>నెలవారీ EMI:</td><td><b>${money(d.emi)}</b> (${d.totalTenureMonths} నెలలు)</td></tr>
+        <tr><td>ఎన్ని EMIలు కట్టాము:</td><td><b class="green">${d.paidCount} నెలలు (${money(d.totalPaidAmount)})</b></td></tr>
+        <tr style="background:#fffde7;"><td><b>ఇంకా కట్టాల్సిన బాకీ:</b></td><td><b class="red">${money(d.remainingPayable)}</b></td></tr>
+        <tr style="background:#e3f2fd;"><td><b>మిగిలిన నెలలు:</b></td><td><b class="blue">${d.pendingMonths} నెలలు</b></td></tr>
+      </table>
+
+      <div class="row" style="margin-top:12px;">
+        <button class="danger" onclick="del('loan',${i})">🗑️ Delete</button>
+      </div>
+    </div>`;
+  }).join("") || '<div class="card">ప్రస్తుతం ఏ లోన్స్ లేవు.</div>';
+}
+
+function renderSalaries() {
+  let y = document.getElementById("salaryYear").value || yyyy;
+  document.getElementById("salaryYear").value = y;
+  let arr = data.salaries.map((s, i) => ({ ...s, i })).filter(s => s.date.startsWith(y)).sort((a, b) => b.date.localeCompare(a.date));
+  
+  document.getElementById("salaryList").innerHTML = arr.length ? `
+    <div class="card">
+      <div style="font-weight:bold;margin-bottom:8px;color:#1565c0;">📅 ${y} శాలరీలు:</div>
+      <div class="scroll">
+        <table>
+          <tr><th>తేదీ</th><th>శాలరీ</th><th>వివరణ</th><th></th></tr>
+          ${arr.map(s => `<tr><td>${s.date}</td><td><b class="green">${money(s.amount)}</b></td><td>${s.note || "-"}</td><td><button class="danger" style="padding:4px 8px;font-size:11px;" onclick="del('salary',${s.i})">X</button></td></tr>`).join("")}
+        </table>
+      </div>
+      <p style="margin-top:12px;"><b>మొత్తం జీతం:</b> <span class="green" style="font-weight:bold;">${money(arr.reduce((a, s) => a + s.amount, 0))}</span></p>
+    </div>` : `<div class="card">${y} సంవత్సరానికి శాలరీ ఎంట్రీలు లేవు.</div>`;
+}
+
+function renderPayments() {
+  let y = document.getElementById("paymentYear").value || yyyy;
+  document.getElementById("paymentYear").value = y;
+  let arr = data.payments.map((p, i) => ({ ...p, i })).filter(p => p.date.startsWith(y)).sort((a, b) => b.date.localeCompare(a.date));
+  
+  document.getElementById("paymentList").innerHTML = arr.length ? `
+    <div class="card">
+      <div style="font-weight:bold;margin-bottom:8px;color:#1565c0;">📅 ${y} EMIలు:</div>
+      <div class="scroll">
+        <table>
+          <tr><th>తేదీ</th><th>లోన్ పేరు</th><th>కట్టిన EMI</th><th>Mode</th><th></th></tr>
+          ${arr.map(p => `<tr><td>${p.date}</td><td><b>${data.loans[p.loanId]?.name || "Deleted"}</b></td><td><b class="red">${money(p.amount)}</b></td><td>${p.mode}</td><td><button class="danger" style="padding:4px 8px;font-size:11px;" onclick="del('payment',${p.i})">X</button></td></tr>`).join("")}
+        </table>
+      </div>
+      <p style="margin-top:12px;"><b>మొత్తం EMIలు:</b> <span class="red" style="font-weight:bold;">${money(arr.reduce((a, p) => a + p.amount, 0))}</span></p>
+    </div>` : `<div class="card">${y} సంవత్సరానికి EMI చెల్లింపులు లేవు.</div>`;
+}
+
+function renderExpenses() {
+  let y = document.getElementById("expenseYear").value || yyyy;
+  document.getElementById("expenseYear").value = y;
+  let arr = data.expenses.map((e, i) => ({ ...e, i })).filter(e => e.date.startsWith(y)).sort((a, b) => b.date.localeCompare(a.date));
+  let cat = {};
+  arr.forEach(e => cat[e.category] = (cat[e.category] || 0) + Number(e.amount));
+  
+  document.getElementById("expenseList").innerHTML = `
+    <div class="card">
+      <b>${y} మొత్తం ఖర్చులు: <span class="orange">${money(arr.reduce((a, e) => a + e.amount, 0))}</span></b>
+      <div class="scroll" style="margin-top:8px;">
+        <table>
+          <tr><th>తేదీ</th><th>కేటగిరీ</th><th>మొత్తం</th><th>వివరణ</th><th></th></tr>
+          ${arr.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td><b>${money(e.amount)}</b></td><td>${e.note || "-"}</td><td><button class="danger" style="padding:4px 8px;font-size:11px;" onclick="del('expense',${e.i})">X</button></td></tr>`).join("")}
+        </table>
+      </div>
+    </div>`;
+}
+
+function switchReportTab(type) {
+  currentReportType = type;
+  document.getElementById("tabMonthly").classList.toggle("active", type === 'monthly');
+  document.getElementById("tabYearly").classList.toggle("active", type === 'yearly');
+  document.getElementById("monthlyControls").style.display = type === 'monthly' ? "grid" : "none";
+  document.getElementById("yearlyControls").style.display = type === 'yearly' ? "grid" : "none";
+  renderReport();
+}
+
+function renderReport() {
+  if (currentReportType === 'monthly') {
+    let m = document.getElementById("reportMonth").value || ym;
+    document.getElementById("reportMonth").value = m;
+    let sal = totalSalary(m), pay = totalPayments(m), exp = totalExpenses(m);
+    let totalOut = exp + pay, balance = sal - totalOut;
+
+    document.getElementById("reportBox").innerHTML = `
+      <h4>📅 నెలవారీ నివేదిక (${m})</h4>
+      <table>
+        <tr><td>వచ్చిన జీతం</td><td><b class="blue">${money(sal)}</b></td></tr>
+        <tr><td>వాడిన ఖర్చులు</td><td>${money(exp)}</td></tr>
+        <tr><td>లోన్ EMI చెల్లింపులు</td><td>${money(pay)}</td></tr>
+        <tr><th>మొత్తం ఖర్చు</th><th>${money(totalOut)}</th></tr>
+        <tr><th>మిగిలిన నగదు</th><th class="${balance < 0 ? 'red' : 'green'}">${money(balance)}</th></tr>
+      </table>`;
+  } else {
+    let y = document.getElementById("reportYear").value || yyyy;
+    document.getElementById("reportYear").value = y;
+    let sal = totalSalary(y), pay = totalPayments(y), exp = totalExpenses(y);
+    let totalOut = exp + pay, balance = sal - totalOut;
+
+    document.getElementById("reportBox").innerHTML = `
+      <h4>📅 వార్షిక నివేదిక (${y})</h4>
+      <table>
+        <tr><td>సంవత్సరం మొత్తం శాలరీ</td><td><b class="blue">${money(sal)}</b></td></tr>
+        <tr><td>ఏడాది మొత్తం ఖర్చులు</td><td>${money(exp)}</td></tr>
+        <tr><td>చెల్లించిన మొత్తం EMIలు</td><td>${money(pay)}</td></tr>
+        <tr><th>ఏడాది మొత్తం ఖర్చు</th><th>${money(totalOut)}</th></tr>
+        <tr><th>నికర పొదుపు</th><th class="${balance < 0 ? 'red' : 'green'}">${money(balance)}</th></tr>
+      </table>`;
+  }
+}
+
+function renderDashboard() {
+  let curSal = totalSalary(ym), exp = totalExpenses(ym), pay = totalPayments(ym), bal = curSal - exp - pay;
+  
+  // ఇంతవరకు వచ్చిన మొత్తం శాలరీ (All Time)
+  document.getElementById("vAllTimeSalary").textContent = money(totalSalaryAllTime());
+  document.getElementById("vSalary").textContent = money(curSal);
+
+  // లోన్స్ సారాంశం
+  document.getElementById("vTotalReceived").textContent = money(totalReceivedAll());
+  document.getElementById("vDebt").textContent = money(totalDebt());
+  document.getElementById("vTotalLoss").textContent = money(totalLossAll());
+
+  // చేతిబదులు బాకీలు
+  let activeHandLoans = data.handLoans ? data.handLoans.filter(h => !h.settled) : [];
+  let handPayable = activeHandLoans.filter(h => h.type === "borrowed").reduce((sum, h) => sum + Number(h.amount), 0);
+  let handReceivable = activeHandLoans.filter(h => h.type === "lent").reduce((sum, h) => sum + Number(h.amount), 0);
+
+  document.getElementById("vHandPayable").textContent = money(handPayable);
+  document.getElementById("vHandReceivable").textContent = money(handReceivable);
+
+  document.getElementById("vExp").textContent = money(exp);
+  document.getElementById("vPay").textContent = money(pay);
+  document.getElementById("cfBalCard").textContent = money(bal);
+  document.getElementById("cfBalCard").className = "stat " + (bal < 0 ? "red" : "green");
+
+  let totalPayableSum = data.loans.reduce((a, l, i) => a + getLoanDetails(i).totalPayableAmount, 0);
+  let totalPaidSum = data.loans.reduce((a, l, i) => a + getLoanDetails(i).totalPaidAmount, 0);
+  let pct = totalPayableSum ? Math.min(100, (totalPaidSum / totalPayableSum) * 100) : 0;
+  
+  document.getElementById("debtBar").style.width = pct + "%";
+  document.getElementById("debtText").textContent = `మొత్తం చెల్లించింది: ${money(totalPaidSum)} / ${money(totalPayableSum)} (${pct.toFixed(1)}%)`;
+}
+
+function backup() {
+  let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "my-finance-backup-" + iso + ".json";
+  a.click();
+}
+
+function restore() {
+  let f = document.getElementById("restoreFile").files[0];
+  if (!f) return alert("దయచేసి బ్యాకప్ ఫైల్‌ను ఎంచుకోండి");
+  let r = new FileReader();
+  r.onload = () => {
+    try {
+      data = JSON.parse(r.result);
+      save();
+      alert("డేటా పునరుద్ధరించబడింది");
+    } catch (e) {
+      alert("సరైన బ్యాకప్ ఫైల్ కాదు");
+    }
+  };
+  r.readAsText(f);
+}
+
+function renderAll() {
+  renderDashboard();
+  renderSalaries();
+  renderLoans();
+  renderPayments();
+  renderExpenses();
+  renderReport();
+  renderHandLoans();
+}
+
+renderAll();
+</script>
+</body>
+</html>
