@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Narasimha Attendance </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background: #f0f2f5; padding-bottom: 30px; -webkit-tap-highlight-color: transparent; }
+
+.app-bar {
+  background: #18191a;
+  color: #fff;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 17px;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.star-icon { color: #4caf50; font-size: 20px; }
+
+.main-wrap { 
+  width: 100%; 
+  max-width: 480px; 
+  margin: 0 auto; 
+  padding: 8px 6px; 
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 8px;
+  margin-bottom: 12px;
+  border: 1px solid #dcdfe6;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.card-title { font-size: 14px; font-weight: bold; color: #1976d2; }
+
+/* 4-Column Grid for Year + Shift + Rates */
+.info-grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr 1fr 1fr; 
+  gap: 4px; 
+  margin-bottom: 6px; 
+}
+.info-grid div { display: flex; flex-direction: column; }
+.info-grid label { font-size: 8.5px; font-weight: bold; color: #555; margin-bottom: 2px; }
+.info-grid input, .info-grid select {
+  padding: 6px 2px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 11px;
+  outline: none;
+  font-weight: bold;
+  text-align: center;
+  width: 100%;
+  background: #fff;
+}
+.info-grid select.year-picker {
+  background: #e3f2fd;
+  color: #1565c0;
+  border-color: #90caf9;
+}
+
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  table-layout: fixed;
+}
+.dash-table, .month-table {
+  border: 2px solid #1976d2;
+}
+
+th {
+  background: #1976d2;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: bold;
+  padding: 6px 1px;
+  border: 1px solid #1565c0;
+  text-align: center;
+}
+
+td {
+  padding: 4px 1px;
+  border: 1px solid #e0e0e0;
+  font-size: 10.5px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.dash-table tr:nth-child(even), .month-table tr:nth-child(even) { background: #fafafa; }
+.dash-table tr.total-row { font-weight: bold; background: #e3f2fd; }
+
+.day-col { line-height: 1.1; font-weight: bold; font-size: 10.5px; }
+.day-name { font-size: 9px; font-weight: bold; display: block; }
+.weekend { color: #d32f2f !important; }
+.saturday { color: #1976d2 !important; }
+
+/* 3D Status Badges */
+td select.status-sel {
+  width: 96%;
+  margin: 0 auto;
+  padding: 5px 0;
+  font-size: 11px;
+  font-weight: 800;
+  outline: none;
+  text-align-last: center;
+  display: block;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+select.st-none {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0f0 100%);
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.1), inset 0 1px 0 #fff;
+  color: #555;
+}
+
+select.st-P {
+  background: linear-gradient(180deg, #66bb6a 0%, #388e3c 60%, #2e7d32 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #1b5e20 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 3px 5px rgba(0,0,0,0.25), 0 1px 0 #1b5e20 !important;
+  text-shadow: 0 -1px 1px #1b5e20;
+}
+
+select.st-A {
+  background: linear-gradient(180deg, #ef5350 0%, #d32f2f 60%, #c62828 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #b71c1c !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 3px 5px rgba(0,0,0,0.25), 0 1px 0 #7f0000 !important;
+  text-shadow: 0 -1px 1px #7f0000;
+}
+
+select.st-W {
+  background: linear-gradient(180deg, #9e9e9e 0%, #757575 60%, #616161 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #424242 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 3px 5px rgba(0,0,0,0.25), 0 1px 0 #212121 !important;
+  text-shadow: 0 -1px 1px #333333;
+}
+
+select.st-C {
+  background: linear-gradient(180deg, #ffa726 0%, #f57c00 60%, #e65100 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #bf360c !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 3px 5px rgba(0,0,0,0.25), 0 1px 0 #bf360c !important;
+  text-shadow: 0 -1px 1px #870000;
+}
+
+select.st-H {
+  background: linear-gradient(180deg, #42a5f5 0%, #1976d2 60%, #1565c0 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #0d47a1 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 3px 5px rgba(0,0,0,0.25), 0 1px 0 #0d47a1 !important;
+  text-shadow: 0 -1px 1px #0d47a1;
+}
+
+select.st-O {
+  background: linear-gradient(180deg, #ab47bc 0%, #7b1fa2 60%, #6a1b9a 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid #4a148c !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 3px 5px rgba(0,0,0,0.25), 0 1px 0 #38006b !important;
+  text-shadow: 0 -1px 1px #38006b;
+}
+
+.time-box {
+  width: 96%;
+  margin: 0 auto;
+  padding: 5px 0;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+  box-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgba(0,0,0,0.08);
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  display: block;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.salary-banner {
+  text-align: center;
+  color: #1976d2;
+  font-size: 20px;
+  font-weight: 800;
+  margin: 10px 0 4px;
+}
+
+.quick-btn {
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #1976d2;
+}
+
+/* Modal Analog Clock */
+.clock-modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  justify-content: center;
+  align-items: center;
+}
+.clock-card {
+  background: #fff;
+  width: 280px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  text-align: center;
+}
+.clock-header {
+  background: #1976d2;
+  color: #fff;
+  padding: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 6px;
+}
+.time-unit {
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.time-unit.active { opacity: 1; border-bottom: 2px solid #fff; }
+.ampm-btn {
+  margin-left: 10px;
+  font-size: 13px;
+  font-weight: bold;
+  background: rgba(255,255,255,0.25);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.clock-face-wrap { padding: 20px; display: flex; justify-content: center; }
+.clock-face {
+  width: 220px;
+  height: 220px;
+  background: #edeef0;
+  border-radius: 50%;
+  position: relative;
+  border: 3px solid #1976d2;
+  touch-action: none;
+  user-select: none;
+}
+.clock-center-dot {
+  width: 8px;
+  height: 8px;
+  background: #1976d2;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.clock-hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  width: 2px;
+  height: 80px;
+  background: #1976d2;
+  transform-origin: bottom center;
+  transform: rotate(0deg);
+  pointer-events: none;
+}
+.clock-hand-end {
+  width: 28px;
+  height: 28px;
+  background: #1976d2;
+  border-radius: 50%;
+  position: absolute;
+  top: -14px;
+  left: -13px;
+}
+.clock-num {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 28px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #333;
+  pointer-events: none;
+}
+.clock-num.selected { color: #fff; font-weight: bold; }
+
+.clock-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 15px;
+  gap: 12px;
+  border-top: 1px solid #eee;
+}
+.clock-actions button {
+  background: none;
+  border: none;
+  color: #1976d2;
+  font-weight: bold;
+  font-size: 13px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app-bar">
+  <div>Narasimha Attendance </div>
+  
+</div>
+
+<div class="main-wrap">
+
+  <div class="card">
+    <div class="info-grid">
+      <div>
+        <label>Year</label>
+        <select id="selectedYear" class="year-picker" onchange="onYearChange()">
+          <!-- 2020 - 2035 Auto Generated -->
+        </select>
+      </div>
+      <div>
+        <label>Shift Limit</label>
+        <select id="shiftLimit" onchange="recalcAllOT()">
+          <option value="8">8 Hrs</option>
+          <option value="10">10 Hrs</option>
+          <option value="12">12 Hrs</option>
+        </select>
+      </div>
+      <div>
+        <label>Per Day (₹)</label>
+        <input type="number" id="dayRate" placeholder="Day ₹" oninput="calcSalary()">
+      </div>
+      <div>
+        <label>OT / Hr (₹)</label>
+        <input type="number" id="otRate" placeholder="OT ₹" oninput="calcSalary()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📊 Year Dashboard (<span id="dashYearTitle">2026</span>)</div>
+    <table class="dash-table" style="margin-top:6px;">
+      <thead>
+        <tr>
+          <th style="width:14%;">Month</th>
+          <th style="width:9%;">P</th>
+          <th style="width:9%;">O</th>
+          <th style="width:9%;">A</th>
+          <th style="width:9%;">W</th>
+          <th style="width:9%;">C</th>
+          <th style="width:9%;">H</th>
+          <th style="width:16%;">Paid</th>
+          <th style="width:16%;">OT</th>
+        </tr>
+      </thead>
+      <tbody id="dashBody"></tbody>
+    </table>
+
+    <div class="salary-banner">
+      Salary ₹ <span id="dashSalary">0.00</span>
+    </div>
+  </div>
+
+  <div id="monthsContainer"></div>
+
+</div>
+
+<!-- Analog Wall Clock Modal -->
+<div id="clockModal" class="clock-modal">
+  <div class="clock-card">
+    <div class="clock-header">
+      <span id="clkHour" class="time-unit active" onclick="switchClockMode('hour')">09</span>
+      <span style="font-size:24px; color:#fff;">:</span>
+      <span id="clkMinute" class="time-unit" onclick="switchClockMode('minute')">00</span>
+      <button id="clkAmPm" class="ampm-btn" onclick="toggleAmPm()">AM</button>
+    </div>
+
+    <div class="clock-face-wrap">
+      <div class="clock-face" id="clockFace">
+        <div class="clock-center-dot"></div>
+        <div class="clock-hand" id="clockHand">
+          <div class="clock-hand-end"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="clock-actions">
+      <button onclick="clearClockTime()">CLEAR</button>
+      <button onclick="closeClockModal()">CANCEL</button>
+      <button onclick="applyClockTime()">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const monthNames = [
+  ["Jan", "January"], ["Feb", "February"], ["Mar", "March"],
+  ["Apr", "April"],   ["May", "May"],      ["Jun", "June"],
+  ["Jul", "July"],    ["Aug", "August"],   ["Sep", "September"],
+  ["Oct", "October"], ["Nov", "November"], ["Dec", "December"]
+];
+
+const yearSelect = document.getElementById("selectedYear");
+for(let y=2020; y<=2035; y++){
+  let opt = document.createElement("option");
+  opt.value = y;
+  opt.innerText = y;
+  if(y === 2026) opt.selected = true;
+  yearSelect.appendChild(opt);
+}
+
+function getDaysInMonth(year, monthIndex) {
+  return new Date(year, monthIndex + 1, 0).getDate(); // Leap year logic automatically handled
+}
+
+function getDayInfo(year, monthIdx, day) {
+  const d = new Date(year, monthIdx, day);
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return days[d.getDay()];
+}
+
+const dashBody = document.getElementById("dashBody");
+const monthsContainer = document.getElementById("monthsContainer");
+
+// Build Dynamic Dashboard & Month Cards
+function initYearView(year) {
+  document.getElementById("dashYearTitle").innerText = year;
+  dashBody.innerHTML = "";
+  monthsContainer.innerHTML = "";
+
+  monthNames.forEach((m, idx) => {
+    dashBody.innerHTML += `
+      <tr id="dash-row-${idx}">
+        <td><b>${m[0]}</b></td>
+        <td class="dp">0</td>
+        <td class="do">0</td>
+        <td class="da">0</td>
+        <td class="dw">0</td>
+        <td class="dc">0</td>
+        <td class="dh">0</td>
+        <td class="dpaid" style="font-weight:bold;">0</td>
+        <td class="dot" style="font-weight:bold;">0.00</td>
+      </tr>
+    `;
+  });
+
+  dashBody.innerHTML += `
+    <tr class="total-row">
+      <td>Total</td>
+      <td id="totP">0</td>
+      <td id="totO">0</td>
+      <td id="totA">0</td>
+      <td id="totW">0</td>
+      <td id="totC">0</td>
+      <td id="totH">0</td>
+      <td id="totPaid">0</td>
+      <td id="totOT">0.00</td>
+    </tr>
+  `;
+
+  monthNames.forEach((m, mIdx) => {
+    let daysCount = getDaysInMonth(year, mIdx);
+    let tableRows = "";
+    for (let d = 1; d <= daysCount; d++) {
+      let weekday = getDayInfo(year, mIdx, d);
+      let dayClass = weekday === "Sun" ? "weekend" : (weekday === "Sat" ? "saturday" : "");
+
+      tableRows += `
+        <tr data-day="${d}">
+          <td class="day-col" style="width:13%;">${d}<span class="day-name ${dayClass}">${weekday}</span></td>
+          <td style="width:19%;">
+            <select class="status-sel st-none" onchange="onStatusChange(this)">
+              <option value="">-</option>
+              <option value="P">P</option>
+              <option value="O">O</option>
+              <option value="A">A</option>
+              <option value="W">W</option>
+              <option value="C">C</option>
+              <option value="H">H</option>
+            </select>
+          </td>
+          <td style="width:25%;">
+            <div class="time-box in-time" onclick="openClock(this)">-</div>
+          </td>
+          <td style="width:25%;">
+            <div class="time-box out-time" onclick="openClock(this)">-</div>
+          </td>
+          <td class="ot-val" style="width:18%; font-weight:bold; font-size:10.5px;">0.00</td>
+        </tr>
+      `;
+    }
+
+    monthsContainer.innerHTML += `
+      <div class="card month-card" data-midx="${mIdx}">
+        <div class="card-header">
+          <span class="card-title">📅 ${m[1]} ${year}</span>
+          <button class="quick-btn" onclick="fillSundays(${mIdx})">Sundays = W</button>
+        </div>
+        <table class="month-table">
+          <thead>
+            <tr>
+              <th style="width:13%;">Day</th>
+              <th style="width:19%;">Status</th>
+              <th style="width:25%;">In</th>
+              <th style="width:25%;">Out</th>
+              <th style="width:18%;">OT</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    `;
+  });
+}
+
+function onYearChange() {
+  saveData(); // Save existing year first
+  let y = +yearSelect.value;
+  initYearView(y);
+  loadData(); // Load newly selected year data
+}
+
+function onStatusChange(el) {
+  el.className = "status-sel";
+  if (el.value) {
+    el.classList.add("st-" + el.value);
+  } else {
+    el.classList.add("st-none");
+  }
+  calcRowOT(el.closest("tr"));
+}
+
+function parse12TimeToMinutes(str) {
+  if (!str || str === "-") return null;
+  let [timePart, ampm] = str.split(" ");
+  let [h, m] = timePart.split(":").map(Number);
+  if (ampm === "PM" && h < 12) h += 12;
+  if (ampm === "AM" && h === 12) h = 0;
+  return h * 60 + m;
+}
+
+function calcRowOT(row) {
+  let status = row.querySelector(".status-sel").value;
+  let inT = row.querySelector(".in-time").innerText.trim();
+  let outT = row.querySelector(".out-time").innerText.trim();
+  let otCell = row.querySelector(".ot-val");
+
+  let shiftLimit = +document.getElementById("shiftLimit").value || 8;
+
+  if (status !== "P" || inT === "-" || outT === "-") {
+    otCell.innerText = "0.00";
+    calcSalary();
+    return;
+  }
+
+  let inMinutes = parse12TimeToMinutes(inT);
+  let outMinutes = parse12TimeToMinutes(outT);
+
+  if (inMinutes === null || outMinutes === null) {
+    otCell.innerText = "0.00";
+    calcSalary();
+    return;
+  }
+
+  let diffMinutes = outMinutes - inMinutes;
+  if (diffMinutes < 0) diffMinutes += 24 * 60;
+
+  let diffHours = diffMinutes / 60;
+  let ot = Math.max(0, diffHours - shiftLimit);
+  otCell.innerText = ot.toFixed(2);
+  calcSalary();
+}
+
+function recalcAllOT() {
+  document.querySelectorAll(".month-card tbody tr").forEach(row => {
+    if(row.querySelector(".status-sel").value === "P") {
+      calcRowOT(row);
+    }
+  });
+  saveData();
+}
+
+function fillSundays(mIdx) {
+  let card = document.querySelector(`.month-card[data-midx="${mIdx}"]`);
+  card.querySelectorAll("tbody tr").forEach(row => {
+    let dayName = row.querySelector(".day-name").innerText;
+    let statusSel = row.querySelector(".status-sel");
+    if (dayName === "Sun" && !statusSel.value) {
+      statusSel.value = "W";
+      onStatusChange(statusSel);
+    }
+  });
+  saveData();
+}
+
+function calcSalary() {
+  let dayRate = +document.getElementById("dayRate").value || 0;
+  let otRate = +document.getElementById("otRate").value || 0;
+
+  let grandPaid = 0, grandOT = 0;
+  let totP = 0, totO = 0, totA = 0, totW = 0, totC = 0, totH = 0;
+
+  document.querySelectorAll(".month-card").forEach((card, idx) => {
+    let p = 0, o = 0, a = 0, w = 0, c = 0, h = 0, ot = 0;
+
+    card.querySelectorAll("tbody tr").forEach(r => {
+      let st = r.querySelector(".status-sel").value;
+      if (st === "P") p++;
+      else if (st === "O") o++;
+      else if (st === "A") a++;
+      else if (st === "W") w++;
+      else if (st === "C") c++;
+      else if (st === "H") h++;
+
+      ot += +r.querySelector(".ot-val").innerText || 0;
+    });
+
+    let paid = p + w + c + h;
+
+    let dRow = document.getElementById(`dash-row-${idx}`);
+    if(dRow) {
+      dRow.querySelector(".dp").innerText = p;
+      dRow.querySelector(".do").innerText = o;
+      dRow.querySelector(".da").innerText = a;
+      dRow.querySelector(".dw").innerText = w;
+      dRow.querySelector(".dc").innerText = c;
+      dRow.querySelector(".dh").innerText = h;
+      dRow.querySelector(".dpaid").innerText = paid;
+      dRow.querySelector(".dot").innerText = ot.toFixed(2);
+    }
+
+    totP += p; totO += o; totA += a; totW += w; totC += c; totH += h;
+    grandPaid += paid;
+    grandOT += ot;
+  });
+
+  document.getElementById("totP").innerText = totP;
+  document.getElementById("totO").innerText = totO;
+  document.getElementById("totA").innerText = totA;
+  document.getElementById("totW").innerText = totW;
+  document.getElementById("totC").innerText = totC;
+  document.getElementById("totH").innerText = totH;
+  document.getElementById("totPaid").innerText = grandPaid;
+  document.getElementById("totOT").innerText = grandOT.toFixed(2);
+
+  let finalSal = (grandPaid * dayRate) + (grandOT * otRate);
+  document.getElementById("dashSalary").innerText = finalSal.toFixed(2);
+}
+
+// Clock Logic
+let activeTargetEl = null;
+let currentMode = "hour";
+let currentHour = 9;
+let currentMinute = 0;
+let isPM = false;
+
+function openClock(el) {
+  activeTargetEl = el;
+  let currVal = el.innerText.trim();
+  
+  if (currVal !== "-") {
+    let parts = currVal.split(" ");
+    let hm = parts[0].split(":");
+    currentHour = parseInt(hm[0], 10);
+    currentMinute = parseInt(hm[1], 10);
+    isPM = parts[1] === "PM";
+  } else {
+    if (el.classList.contains("in-time")) {
+      currentHour = 9;
+      isPM = false;
+    } else {
+      currentHour = 6;
+      isPM = true;
+    }
+    currentMinute = 0;
+  }
+
+  document.getElementById("clkAmPm").innerText = isPM ? "PM" : "AM";
+  switchClockMode("hour");
+  document.getElementById("clockModal").style.display = "flex";
+}
+
+function closeClockModal() {
+  document.getElementById("clockModal").style.display = "none";
+}
+
+function toggleAmPm() {
+  isPM = !isPM;
+  document.getElementById("clkAmPm").innerText = isPM ? "PM" : "AM";
+}
+
+function switchClockMode(mode) {
+  currentMode = mode;
+  document.getElementById("clkHour").classList.toggle("active", mode === "hour");
+  document.getElementById("clkMinute").classList.toggle("active", mode === "minute");
+  renderClockFace();
+}
+
+function renderClockFace() {
+  const face = document.getElementById("clockFace");
+  const hand = document.getElementById("clockHand");
+
+  face.querySelectorAll(".clock-num").forEach(n => n.remove());
+
+  document.getElementById("clkHour").innerText = currentHour < 10 ? "0" + currentHour : currentHour;
+  document.getElementById("clkMinute").innerText = currentMinute < 10 ? "0" + currentMinute : currentMinute;
+
+  let radius = 80;
+  let center = 110;
+
+  if (currentMode === "hour") {
+    let angle = (currentHour % 12) * 30;
+    hand.style.transform = `rotate(${angle}deg)`;
+
+    for (let h = 1; h <= 12; h++) {
+      let rad = (h * 30 - 90) * (Math.PI / 180);
+      let x = center + radius * Math.cos(rad) - 14;
+      let y = center + radius * Math.sin(rad) - 14;
+
+      let div = document.createElement("div");
+      div.className = "clock-num" + (h === currentHour ? " selected" : "");
+      div.style.left = `${x}px`;
+      div.style.top = `${y}px`;
+      div.innerText = h;
+      face.appendChild(div);
+    }
+  } else {
+    let angle = currentMinute * 6;
+    hand.style.transform = `rotate(${angle}deg)`;
+
+    for (let m = 0; m < 60; m += 5) {
+      let rad = (m * 6 - 90) * (Math.PI / 180);
+      let x = center + radius * Math.cos(rad) - 14;
+      let y = center + radius * Math.sin(rad) - 14;
+
+      let div = document.createElement("div");
+      div.className = "clock-num" + (m === currentMinute ? " selected" : "");
+      div.style.left = `${x}px`;
+      div.style.top = `${y}px`;
+      div.innerText = m < 10 ? "0" + m : m;
+      face.appendChild(div);
+    }
+  }
+}
+
+const faceEl = document.getElementById("clockFace");
+let isDragging = false;
+
+function handleClockPointer(e) {
+  const rect = faceEl.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  const dx = clientX - centerX;
+  const dy = clientY - centerY;
+
+  let deg = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+  if (deg < 0) deg += 360;
+
+  if (currentMode === "hour") {
+    let h = Math.round(deg / 30);
+    if (h === 0) h = 12;
+    currentHour = h;
+  } else {
+    let m = Math.round(deg / 6);
+    if (m === 60) m = 0;
+    currentMinute = m;
+  }
+  renderClockFace();
+}
+
+faceEl.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  handleClockPointer(e);
+});
+window.addEventListener("mousemove", (e) => {
+  if (isDragging) handleClockPointer(e);
+});
+window.addEventListener("mouseup", () => {
+  if (isDragging) {
+    isDragging = false;
+    if (currentMode === "hour") switchClockMode("minute");
+  }
+});
+
+faceEl.addEventListener("touchstart", (e) => {
+  isDragging = true;
+  handleClockPointer(e);
+}, { passive: false });
+
+window.addEventListener("touchmove", (e) => {
+  if (isDragging) {
+    handleClockPointer(e);
+    e.preventDefault();
+  }
+}, { passive: false });
+
+window.addEventListener("touchend", () => {
+  if (isDragging) {
+    isDragging = false;
+    if (currentMode === "hour") switchClockMode("minute");
+  }
+});
+
+function applyClockTime() {
+  if (activeTargetEl) {
+    let hh = currentHour < 10 ? '0' + currentHour : currentHour;
+    let mm = currentMinute < 10 ? '0' + currentMinute : currentMinute;
+    let ampmStr = isPM ? "PM" : "AM";
+    
+    activeTargetEl.innerText = `${hh}:${mm} ${ampmStr}`;
+    calcRowOT(activeTargetEl.closest("tr"));
+    saveData();
+  }
+  closeClockModal();
+}
+
+function clearClockTime() {
+  if (activeTargetEl) {
+    activeTargetEl.innerText = "-";
+    calcRowOT(activeTargetEl.closest("tr"));
+    saveData();
+  }
+  closeClockModal();
+}
+
+// Multi-Year LocalStorage System
+function saveData() {
+  let yr = yearSelect.value;
+  let allEntries = [];
+  document.querySelectorAll(".month-card tbody tr").forEach(row => {
+    allEntries.push({
+      s: row.querySelector(".status-sel").value,
+      i: row.querySelector(".in-time").innerText.trim(),
+      o: row.querySelector(".out-time").innerText.trim(),
+      ot: row.querySelector(".ot-val").innerText
+    });
+  });
+
+  let data = {
+    shiftLimit: document.getElementById("shiftLimit").value,
+    dayRate: document.getElementById("dayRate").value,
+    otRate: document.getElementById("otRate").value,
+    entries: allEntries
+  };
+  localStorage.setItem("att_pro_data_" + yr, JSON.stringify(data));
+}
+
+function loadData() {
+  let yr = yearSelect.value;
+  let saved = localStorage.getItem("att_pro_data_" + yr);
+  if (!saved) {
+    calcSalary();
+    return;
+  }
+  let data = JSON.parse(saved);
+
+  document.getElementById("shiftLimit").value = data.shiftLimit || "8";
+  document.getElementById("dayRate").value = data.dayRate || "";
+  document.getElementById("otRate").value = data.otRate || "";
+
+  let rows = document.querySelectorAll(".month-card tbody tr");
+  data.entries?.forEach((item, i) => {
+    if (rows[i]) {
+      let sSel = rows[i].querySelector(".status-sel");
+      sSel.value = item.s;
+      onStatusChange(sSel);
+
+      rows[i].querySelector(".in-time").innerText = item.i || "-";
+      rows[i].querySelector(".out-time").innerText = item.o || "-";
+      rows[i].querySelector(".ot-val").innerText = item.ot || "0.00";
+    }
+  });
+
+  calcSalary();
+}
+
+document.addEventListener("change", (e) => {
+  if (e.target.id !== "selectedYear") saveData();
+});
+
+window.onload = () => {
+  initYearView(+yearSelect.value);
+  loadData();
+};
+</script>
+
+</body>
+</html>
