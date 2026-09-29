@@ -8,5 +8,15 @@
     "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-live-attendance-app-v8/live-attendance-app-debug.apk",
     "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-live-attendance-app-v8/live-attendance-app-release.aab",
     "updated_at": "2026-09-28T07:22:59.017Z"
+  },
+  {
+    "name": "Exhaust & RTU",
+    "package_name": "com.exhaustandrtu.app",
+    "version": "1.0.0",
+    "version_code": 1,
+    "source_type": "zip",
+    "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v1/exhaust---rtu-debug.apk",
+    "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v1/exhaust---rtu-release.aab",
+    "updated_at": "2026-09-29T08:45:04.477Z"
   }
 ]
