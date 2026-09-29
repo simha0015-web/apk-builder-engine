@@ -235,7 +235,7 @@
     </div>
 
     <div id="htmlBox" style="display:none; margin-top:10px;">
-      <label>HTML / CSS / JS కోడ్:</label>
+      <label>HTML / CSS / JS కోడ్ (ఎంత పెద్దదైనా సరే):</label>
       <textarea id="rawHtml" rows="6" placeholder="<!DOCTYPE html><html>...</html>"></textarea>
     </div>
 
@@ -369,7 +369,6 @@
     reader.readAsDataURL(file);
   }
 
-  // ఏ సైజ్, ఏ రిజల్యూషన్ ఇమేజ్ ఇచ్చినా 512x512 కి స్మార్ట్ సెంటర్ క్రాపింగ్ & కంప్రెస్ చేసే ఫంక్షన్
   function handleUniversalIconUpload(input) {
     const file = input.files[0];
     if (!file) return;
@@ -384,13 +383,11 @@
     };
 
     img.onload = function() {
-      // 512x512 హై-క్వాలిటీ కాన్వాస్ సృష్టి
       const canvas = document.createElement('canvas');
       canvas.width = 512;
       canvas.height = 512;
       const ctx = canvas.getContext('2d');
 
-      // ఇమేజ్ స్ట్రెచ్ కాకుండా స్క్వేర్ షేప్‌లో సెంటర్ క్రాప్ చేయడం (Center-crop Logic)
       const minDim = Math.min(img.width, img.height);
       const startX = (img.width - minDim) / 2;
       const startY = (img.height - minDim) / 2;
@@ -398,11 +395,9 @@
       ctx.clearRect(0, 0, 512, 512);
       ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, 512, 512);
 
-      // కేవలం 40-70 KB తేలికైన హై-క్వాలిటీ PNGగా మార్పు
       const dataUrl = canvas.toDataURL('image/png', 0.92);
       iconBase64 = dataUrl.split(',')[1];
 
-      // ప్రివ్యూ మరియు స్టేటస్ చూపించడం
       document.getElementById('iconPreviewImg').src = dataUrl;
       document.getElementById('iconPreviewBox').style.display = 'flex';
       document.getElementById('iconStatus').innerText = `✅ సిద్ధమైంది: ${(iconBase64.length * 0.75 / 1024).toFixed(1)} KB కి ఆప్టిమైజ్ చేయబడింది`;
@@ -444,6 +439,13 @@
 
     document.getElementById('appFormCard').scrollIntoView({ behavior: 'smooth' });
     alert(`🔄 "${app.name}" వివరాలు లోడ్ అయ్యాయి! Version Code: ${currentCode + 1} కి మారింది. కొత్త కోడ్/ఫైల్స్ జతచేసి నేరుగా Build బటన్ నొక్కండి.`);
+  }
+
+  // UTF-8 సేఫ్ Base64 ఎన్‌కోడర్ (తెలుగు మరియు పెద్ద కోడ్ కోసం)
+  function utf8ToBase64(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+      return String.fromCharCode('0x' + p1);
+    }));
   }
 
   async function uploadFileToGitHub(repo, token, path, contentBase64) {
@@ -586,17 +588,34 @@
     try {
       let hasCustomZip = false;
       let hasCustomIcon = false;
+      let hasCustomHtml = false;
 
+      // 1. ZIP Upload
       if (sourceType === 'zip' && zipBase64) {
         await uploadFileToGitHub(repo, token, 'build_cache/project.zip', zipBase64);
         hasCustomZip = true;
       }
 
+      // 2. Icon Upload
       if (iconBase64) {
         await uploadFileToGitHub(repo, token, 'build_cache/icon.png', iconBase64);
         hasCustomIcon = true;
       }
 
+      // 3. Large HTML Code Upload (Payload Size Limit లేకుండా డైరెక్ట్ ఫైల్ అప్‌లోడ్)
+      if (sourceType === 'raw_html') {
+        const rawHtmlCode = document.getElementById('rawHtml').value;
+        if (!rawHtmlCode.trim()) {
+          alert("దయచేసి HTML కోడ్‌ను పేస్ట్ చేయండి!");
+          buildBtn.disabled = false;
+          return;
+        }
+        const htmlBase64 = utf8ToBase64(rawHtmlCode);
+        await uploadFileToGitHub(repo, token, 'build_cache/index.html', htmlBase64);
+        hasCustomHtml = true;
+      }
+
+      // Payload తేలికగా ఉండేలా పెద్ద కోడ్‌ను తొలగించి boolean flag పంపడం
       const appConfig = {
         app_name: name,
         app_slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -605,7 +624,7 @@
         version_code: vCode,
         source_type: sourceType,
         web_url: document.getElementById('webUrl').value.trim(),
-        html_content: document.getElementById('rawHtml').value,
+        has_custom_html: hasCustomHtml,
         has_custom_zip: hasCustomZip,
         has_custom_icon: hasCustomIcon,
         orientation: document.getElementById('orientation').value,
