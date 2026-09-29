@@ -12,11 +12,11 @@
   {
     "name": "Exhaust & RTU",
     "package_name": "com.exhaustandrtu.app",
-    "version": "1.0.0",
-    "version_code": 1,
-    "source_type": "zip",
-    "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v1/exhaust---rtu-debug.apk",
-    "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v1/exhaust---rtu-release.aab",
-    "updated_at": "2026-09-29T08:45:04.477Z"
+    "version": "1.0.1",
+    "version_code": 2,
+    "source_type": "raw_html",
+    "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v2/exhaust---rtu-debug.apk",
+    "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v2/exhaust---rtu-release.aab",
+    "updated_at": "2026-09-29T09:22:13.516Z"
   }
 ]
