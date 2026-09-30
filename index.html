@@ -86,7 +86,7 @@
       background: #0b1120; 
       cursor: pointer; 
       margin-top: 5px; 
-      transition: border-color 0.2s;
+      transition: border-color 0.2s; 
     }
     .file-drop:hover { border-color: var(--accent); }
     .file-drop input { display: none; }
@@ -124,6 +124,7 @@
       transition: background 0.2s; 
     }
     button.build-btn:hover { background: var(--primary-hover); }
+
     .app-card { 
       background: #0b1120; 
       padding: 16px; 
@@ -131,12 +132,17 @@
       margin-top: 12px; 
       border: 1px solid var(--border); 
       display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      flex-wrap: wrap; 
-      gap: 10px; 
+      flex-direction: column;
+      gap: 12px;
     }
-    .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn-group a, .btn-group button { 
       text-decoration: none; 
       padding: 8px 12px; 
@@ -153,6 +159,38 @@
     }
     .btn-group a.aab { background: #7c3aed; }
     .btn-group button.btn-update { background: #f59e0b; color: #000; }
+    
+    .license-panel {
+      background: #151d30;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px dashed var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn-pay {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .btn-key {
+      background: #10b981;
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+    }
 
     #statusBox { 
       display: none; 
@@ -167,6 +205,8 @@
     .badge-progress { background: #eab308; color: #000; animation: pulse 1.5s infinite; }
     .badge-success { background: #22c55e; color: #000; }
     .badge-failed { background: #ef4444; color: #fff; }
+    .badge-unpaid { background: #ef4444; color: #fff; }
+    .badge-paid { background: #10b981; color: #000; }
     .progress-bar-container { background: #1e293b; height: 8px; border-radius: 4px; overflow: hidden; margin: 12px 0; }
     .progress-bar { background: var(--accent); height: 100%; width: 0%; transition: width 0.4s ease; }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
@@ -322,7 +362,7 @@
   </div>
 
   <div class="card">
-    <h2>📂 మీ యాప్స్ హిస్టరీ (Store & Update)</h2>
+    <h2>📂 మీ యాప్స్ హిస్టరీ & క్లయింట్ లైసెన్స్ మేనేజ్‌మెంట్</h2>
     <button onclick="loadApps()" style="background:#263352; border:none; padding:10px; border-radius:6px; color:#fff; cursor:pointer; font-weight:bold;">🔄 Refresh Apps List</button>
     <div id="appsList" style="margin-top:10px;">డేటా లోడ్ చేయడానికి Refresh నొక్కండి.</div>
   </div>
@@ -441,11 +481,22 @@
     alert(`🔄 "${app.name}" వివరాలు లోడ్ అయ్యాయి! Version Code: ${currentCode + 1} కి మారింది. కొత్త కోడ్/ఫైల్స్ జతచేసి నేరుగా Build బటన్ నొక్కండి.`);
   }
 
-  // UTF-8 సేఫ్ Base64 ఎన్‌కోడర్ (తెలుగు మరియు పెద్ద కోడ్ కోసం)
   function utf8ToBase64(str) {
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
       return String.fromCharCode('0x' + p1);
     }));
+  }
+
+  // పాత మరియు కొత్త యాప్స్ అన్నింటికీ ఆటోమేటిక్ కీ జనరేటర్ ఫంక్షన్
+  function generateAppKey(pkgName) {
+    let hash = 0;
+    const str = pkgName + "secret_pass_2026";
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    const hex = Math.abs(hash).toString(16).toUpperCase().padStart(8, '0').substring(0, 8);
+    return "KEY-" + hex;
   }
 
   async function uploadFileToGitHub(repo, token, path, contentBase64) {
@@ -464,7 +515,7 @@
     } catch(e){}
 
     const body = {
-      message: `Upload build asset: ${path}`,
+      message: `Update: ${path}`,
       content: contentBase64
     };
     if (sha) body.sha = sha;
@@ -480,8 +531,42 @@
 
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(`ఫైల్ అప్‌లోడ్ విఫలమైంది (${path}): ` + (err.message || res.statusText));
+      throw new Error(`ఫైల్ అప్‌డేట్ విఫలమైంది (${path}): ` + (err.message || res.statusText));
     }
+  }
+
+  async function togglePayment(pkgName) {
+    const token = document.getElementById('ghToken').value.trim();
+    const repo = detectRepo();
+    if (!token || !repo) {
+      alert("GitHub Token నమోదు చేయండి!");
+      return;
+    }
+
+    const app = cachedApps.find(a => a.package_name === pkgName);
+    if (!app) return;
+
+    const confirmVerify = confirm(`"${app.name}" కు క్లయింట్ నుండి పేమెంట్ అందిందా?\n\nపేమెంట్ వెరిఫై చేసి లైసెన్స్ కీని అన్‌లాక్ చేయాలా?`);
+    if (!confirmVerify) return;
+
+    app.is_paid = !app.is_paid;
+    if (!app.license_key) {
+      app.license_key = generateAppKey(app.package_name);
+    }
+
+    try {
+      const updatedJson = JSON.stringify(cachedApps, null, 2);
+      await uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(updatedJson));
+      alert(`✅ "${app.name}" పేమెంట్ వెరిఫై చేయబడింది! లైసెన్స్ కీ అన్‌లాక్ అయింది.`);
+      loadApps();
+    } catch (e) {
+      alert("స్టేటస్ అప్‌డేట్ విఫలమైంది: " + e.message);
+    }
+  }
+
+  function copyKey(key) {
+    navigator.clipboard.writeText(key);
+    alert(`🔑 లైసెన్స్ కీ కాపీ చేయబడింది:\n\n${key}\n\nదీన్ని మీ క్లయింట్‌కు పంపండి!`);
   }
 
   async function startTrackingBuild(repo, token) {
@@ -523,7 +608,7 @@
           } else if (run.status === "in_progress") {
             statusBadge.innerText = "బిల్డ్ అవుతోంది...";
             progressBar.style.width = "65%";
-            statusDetail.innerText = "Capacitor ద్వారా కోడ్ సింక్ అయి APK & AAB ఫైల్స్ కంపైల్ అవుతున్నాయి (3-4 నిమిషాలు)...";
+            statusDetail.innerText = "కోడ్ సింక్ అయి APK & AAB ఫైల్స్ కంపైల్ అవుతున్నాయి...";
           } else if (run.status === "completed") {
             clearInterval(statusPoller);
             if (run.conclusion === "success") {
@@ -531,7 +616,7 @@
               statusBadge.innerText = "✅ పూర్తయింది";
               progressBar.style.width = "100%";
               statusTitle.innerText = "🎉 యాప్ బిల్డ్ విజయవంతమైంది!";
-              statusDetail.innerText = "APK మరియు AAB ఫైల్స్ సిద్ధమయ్యాయి. కింద లిస్ట్‌లో డౌన్‌లోడ్ చేసుకోండి.";
+              statusDetail.innerText = "APK మరియు AAB సిద్ధమయ్యాయి. కింద లిస్ట్‌లో పేమెంట్ వెరిఫై చేసి కీ పొందండి.";
               loadApps();
             } else {
               statusBadge.className = "badge badge-failed";
@@ -539,7 +624,7 @@
               progressBar.style.width = "100%";
               progressBar.style.background = "#ef4444";
               statusTitle.innerText = "బిల్డ్ ఫెయిల్ అయింది!";
-              statusDetail.innerText = "ఎర్రర్ వివరాల కోసం పై లింక్ ఓపెన్ చేసి లాగ్స్ చెక్ చేయండి.";
+              statusDetail.innerText = "లాగ్స్ చెక్ చేయండి.";
             }
           }
         }
@@ -590,19 +675,16 @@
       let hasCustomIcon = false;
       let hasCustomHtml = false;
 
-      // 1. ZIP Upload
       if (sourceType === 'zip' && zipBase64) {
         await uploadFileToGitHub(repo, token, 'build_cache/project.zip', zipBase64);
         hasCustomZip = true;
       }
 
-      // 2. Icon Upload
       if (iconBase64) {
         await uploadFileToGitHub(repo, token, 'build_cache/icon.png', iconBase64);
         hasCustomIcon = true;
       }
 
-      // 3. Large HTML Code Upload (Payload Size Limit లేకుండా డైరెక్ట్ ఫైల్ అప్‌లోడ్)
       if (sourceType === 'raw_html') {
         const rawHtmlCode = document.getElementById('rawHtml').value;
         if (!rawHtmlCode.trim()) {
@@ -615,7 +697,6 @@
         hasCustomHtml = true;
       }
 
-      // Payload తేలికగా ఉండేలా పెద్ద కోడ్‌ను తొలగించి boolean flag పంపడం
       const appConfig = {
         app_name: name,
         app_slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -689,17 +770,40 @@
       }
 
       cachedApps.slice().reverse().forEach(app => {
+        const isPaid = app.is_paid || false;
+        const key = app.license_key || generateAppKey(app.package_name);
+        app.license_key = key;
+
         list.innerHTML += `
           <div class="app-card">
-            <div>
-              <strong>${app.name}</strong> <span style="color:var(--accent); font-size:12px;">v${app.version} (Code: ${app.version_code})</span><br>
-              <small style="color:var(--text-muted);">${app.package_name}</small><br>
-              <small style="color:var(--text-muted); font-size:11px;">చివరి అప్‌డేట్: ${new Date(app.updated_at).toLocaleString()}</small>
+            <div class="app-header">
+              <div>
+                <strong>${app.name}</strong> 
+                <span style="color:var(--accent); font-size:12px;">v${app.version} (Code: ${app.version_code})</span>
+                <span class="badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}" style="margin-left:8px;">
+                  ${isPaid ? '✅ Paid & Verified' : '⏳ Unpaid (Locked)'}
+                </span>
+                <br>
+                <small style="color:var(--text-muted);">${app.package_name}</small>
+              </div>
+              <div class="btn-group">
+                <button class="btn-update" onclick="prepareUpdateApp('${app.package_name}')">🔄 Update</button>
+                <a href="${app.apk_url}" target="_blank">📥 APK</a>
+                <a href="${app.aab_url}" target="_blank" class="aab">📦 AAB</a>
+              </div>
             </div>
-            <div class="btn-group">
-              <button class="btn-update" onclick="prepareUpdateApp('${app.package_name}')">🔄 Update App</button>
-              <a href="${app.apk_url}" target="_blank">📥 APK</a>
-              <a href="${app.aab_url}" target="_blank" class="aab">📦 AAB</a>
+
+            <div class="license-panel">
+              <div style="font-size: 13px;">
+                <strong>క్లయింట్ లైసెన్స్ కీ:</strong> 
+                ${isPaid ? `<code style="background:#0b1120; padding:4px 8px; border-radius:4px; color:#38bdf8; font-weight:bold;">${key}</code>` : '<span style="color:#ef4444;">🔒 పేమెంట్ వెరిఫై చేయబడలేదు</span>'}
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn-pay" onclick="togglePayment('${app.package_name}')">
+                  ${isPaid ? 'Mark as Unpaid' : '💰 Verify Payment'}
+                </button>
+                ${isPaid ? `<button class="btn-key" onclick="copyKey('${key}')">📋 Copy Key</button>` : ''}
+              </div>
             </div>
           </div>
         `;
