@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pro Android App Studio</title>
+  <title>Pro Android App Studio & Client License Manager</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -14,6 +14,9 @@
       --accent: #38bdf8;
       --text: #f8fafc;
       --text-muted: #94a3b8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
     }
     body { 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -23,7 +26,7 @@
       padding: 20px; 
       line-height: 1.5; 
     }
-    .container { max-width: 900px; margin: auto; }
+    .container { max-width: 950px; margin: auto; }
     .header { text-align: center; margin-bottom: 25px; }
     .header h1 { margin: 0; color: var(--accent); font-size: 26px; }
     .header p { color: var(--text-muted); margin: 5px 0 0; font-size: 14px; }
@@ -46,7 +49,10 @@
       gap: 8px; 
     }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+    @media (max-width: 768px) { 
+      .grid, .grid-4 { grid-template-columns: 1fr; } 
+    }
     label { display: block; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
     input, select, textarea { 
       width: 100%; 
@@ -125,72 +131,86 @@
     }
     button.build-btn:hover { background: var(--primary-hover); }
 
-    .app-card { 
-      background: #0b1120; 
-      padding: 16px; 
-      border-radius: 10px; 
-      margin-top: 12px; 
+    /* Client Ledger Card Styling */
+    .client-card { 
+      background: #0d1527; 
       border: 1px solid var(--border); 
+      border-radius: 12px; 
+      padding: 18px; 
+      margin-top: 16px; 
       display: flex; 
-      flex-direction: column;
+      flex-direction: column; 
+      gap: 14px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    }
+    .client-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .client-info-table {
+      width: 100%;
+      background: #080d1a;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 12px;
+      font-size: 13px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 12px;
     }
-    .app-header {
+    .info-label { color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: bold; }
+    .info-value { color: #fff; font-weight: 600; margin-top: 2px; word-break: break-all; }
+
+    .key-display-box {
+      background: #060913;
+      border: 1px solid #1e293b;
+      padding: 12px 16px;
+      border-radius: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 10px;
     }
+    .key-code {
+      font-family: monospace;
+      font-size: 16px;
+      font-weight: bold;
+      color: #38bdf8;
+      background: #0f172a;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #38bdf844;
+      letter-spacing: 1px;
+    }
+
     .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn-group a, .btn-group button { 
       text-decoration: none; 
-      padding: 8px 12px; 
+      padding: 8px 14px; 
       background: #16a34a; 
       color: white; 
       border-radius: 6px; 
-      font-size: 13px; 
+      font-size: 12px; 
       font-weight: bold; 
       display: inline-flex; 
       align-items: center; 
-      gap: 5px; 
+      gap: 6px; 
       border: none; 
       cursor: pointer; 
     }
     .btn-group a.aab { background: #7c3aed; }
-    .btn-group button.btn-update { background: #f59e0b; color: #000; }
-    
-    .license-panel {
-      background: #151d30;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px dashed var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .btn-pay {
-      background: #0284c7;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    .btn-key {
-      background: #10b981;
-      color: #000;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: bold;
-    }
+    .btn-whatsapp { background: #25d366 !important; color: #000 !important; }
+    .btn-mail { background: #ea4335 !important; color: white !important; }
+    .btn-verify { background: #0284c7 !important; color: white !important; }
+    .btn-copy { background: #38bdf8 !important; color: #000 !important; }
+
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .badge-paid { background: #10b981; color: #000; }
+    .badge-unpaid { background: #ef4444; color: #fff; }
 
     #statusBox { 
       display: none; 
@@ -200,31 +220,46 @@
       padding: 16px; 
       margin-top: 20px; 
     }
-    .status-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 15px; }
-    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-    .badge-progress { background: #eab308; color: #000; animation: pulse 1.5s infinite; }
-    .badge-success { background: #22c55e; color: #000; }
-    .badge-failed { background: #ef4444; color: #fff; }
-    .badge-unpaid { background: #ef4444; color: #fff; }
-    .badge-paid { background: #10b981; color: #000; }
     .progress-bar-container { background: #1e293b; height: 8px; border-radius: 4px; overflow: hidden; margin: 12px 0; }
     .progress-bar { background: var(--accent); height: 100%; width: 0%; transition: width 0.4s ease; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
   </style>
 </head>
 <body>
 
 <div class="container">
   <div class="header">
-    <h1>🚀 Android Cloud App Studio</h1>
-    <p>URL, HTML లేదా Local ZIP ద్వారా Play Store-రెడీ APK & AAB ఫైల్స్ నిర్మించండి</p>
+    <h1>🚀 Android Cloud App Studio & Client Manager</h1>
+    <p>యాప్స్ నిర్మాణం, క్లయింట్ పేమెంట్ వెరిఫికేషన్ మరియు లైసెన్స్ కీ లెడ్జర్</p>
   </div>
 
   <div class="card">
     <h2>🔑 యాక్సెస్ సెటప్</h2>
     <label>GitHub Personal Access Token (PAT):</label>
     <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx">
-    <small style="color:var(--text-muted); font-size:11px;">ఇది మీ బ్రౌజర్ లోకల్ స్టోరేజ్‌లో మాత్రమే సేవ్ అవుతుంది.</small>
+    <small style="color:var(--text-muted); font-size:11px;">ఇది మీ బ్రౌజర్ లోకల్ స్టోరేజ్‌లో మాత్రమే సురక్షితంగా ఉంటుంది.</small>
+  </div>
+
+  <!-- Client Details Section with Email -->
+  <div class="card">
+    <h2>👤 క్లయింట్ వివరాలు (Client Billing Details)</h2>
+    <div class="grid-4">
+      <div>
+        <label>క్లయింట్ పేరు (Client Name):</label>
+        <input type="text" id="clientName" placeholder="ఉదా: రమేష్ నాయుడు">
+      </div>
+      <div>
+        <label>క్లయింట్ ఈమెయిల్ (Client Email):</label>
+        <input type="email" id="clientEmail" placeholder="client@example.com">
+      </div>
+      <div>
+        <label>వాట్సాప్ / ఫోన్ (Phone):</label>
+        <input type="text" id="clientPhone" placeholder="+91 9876543210">
+      </div>
+      <div>
+        <label>ఫిక్స్ చేసిన ధర (Fee ₹):</label>
+        <input type="number" id="clientFee" placeholder="₹ 5000">
+      </div>
+    </div>
   </div>
 
   <div class="card" id="appFormCard">
@@ -236,7 +271,7 @@
       </div>
       <div>
         <label>Package Name (Application ID):</label>
-        <input type="text" id="pkgName" placeholder="com.mycompany.app">
+        <input type="text" id="pkgName" placeholder="com.clientname.app">
       </div>
     </div>
     <div class="grid">
@@ -255,23 +290,23 @@
     <h2>📦 సోర్స్ టైప్ & ఫైల్స్ (Source Input)</h2>
     <label>సెలెక్ట్ చేయండి:</label>
     <select id="sourceType" onchange="toggleSource()">
-      <option value="zip">Local ZIP File Upload (HTML, CSS, JS Project)</option>
       <option value="url">Website URL (Web App / PWA)</option>
+      <option value="zip">Local ZIP File Upload (HTML, CSS, JS Project)</option>
       <option value="raw_html">Direct HTML Code</option>
     </select>
 
-    <div id="zipBox" style="margin-top:10px;">
+    <div id="urlBox" style="margin-top:10px;">
+      <label>వెబ్‌సైట్ లైవ్ లింక్:</label>
+      <input type="url" id="webUrl" placeholder="https://mycoolsite.com">
+    </div>
+
+    <div id="zipBox" style="display:none; margin-top:10px;">
       <label>ప్రాజెక్ట్ ZIP ఫైల్ అప్‌లోడ్ చేయండి:</label>
       <div class="file-drop" onclick="document.getElementById('zipInput').click()">
         📁 ZIP ఫైల్ ఎంచుకోవడానికి ఇక్కడ ట్యాప్ చేయండి
         <input type="file" id="zipInput" accept=".zip" onchange="handleZipUpload(this)">
       </div>
       <div id="zipStatus" class="file-status"></div>
-    </div>
-
-    <div id="urlBox" style="display:none; margin-top:10px;">
-      <label>వెబ్‌సైట్ లైవ్ లింక్:</label>
-      <input type="url" id="webUrl" placeholder="https://mycoolsite.com">
     </div>
 
     <div id="htmlBox" style="display:none; margin-top:10px;">
@@ -330,26 +365,12 @@
       </div>
     </div>
 
-    <div class="grid">
-      <div>
-        <label>ఫుల్ స్క్రీన్ మోడ్:</label>
-        <select id="fullscreen">
-          <option value="false">Standard (Show Status Bar)</option>
-          <option value="true">Immersive Fullscreen</option>
-        </select>
-      </div>
-      <div>
-        <label>స్టేటస్ బార్ బ్యాక్‌గ్రౌండ్ కలర్ (HEX):</label>
-        <input type="text" id="statusColor" value="#0b0f19" placeholder="#000000">
-      </div>
-    </div>
-
     <button class="build-btn" onclick="triggerBuild()">⚡ Build Release APK & AAB Now</button>
 
     <div id="statusBox">
-      <div class="status-header">
+      <div style="display:flex; justify-content:space-between; font-weight:bold;">
         <span id="statusTitle">🚀 బిల్డ్ ప్రారంభమవుతోంది...</span>
-        <span id="statusBadge" class="badge badge-progress">ఇన్-ప్రోగ్రెస్</span>
+        <span id="statusBadge" class="badge" style="background:#eab308; color:#000;">Queueing...</span>
       </div>
       <div class="progress-bar-container">
         <div id="progressBar" class="progress-bar"></div>
@@ -361,10 +382,13 @@
     </div>
   </div>
 
+  <!-- Client Ledger and License History -->
   <div class="card">
-    <h2>📂 మీ యాప్స్ హిస్టరీ & క్లయింట్ లైసెన్స్ మేనేజ్‌మెంట్</h2>
-    <button onclick="loadApps()" style="background:#263352; border:none; padding:10px; border-radius:6px; color:#fff; cursor:pointer; font-weight:bold;">🔄 Refresh Apps List</button>
-    <div id="appsList" style="margin-top:10px;">డేటా లోడ్ చేయడానికి Refresh నొక్కండి.</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;">
+      <h2 style="border:none; margin:0; padding:0;">📋 క్లయింట్ లెడ్జర్ & లైసెన్స్ కీ హిస్టరీ</h2>
+      <button onclick="loadApps()" style="background:#263352; border:none; padding:8px 14px; border-radius:6px; color:#fff; cursor:pointer; font-weight:bold;">🔄 Refresh List</button>
+    </div>
+    <div id="appsList" style="margin-top:10px;">డేటా లోడ్ అవుతోంది...</div>
   </div>
 </div>
 
@@ -413,15 +437,11 @@
     const file = input.files[0];
     if (!file) return;
 
-    document.getElementById('iconStatus').innerText = `⏳ ప్రాసెస్ అవుతోంది: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)...`;
-
+    document.getElementById('iconStatus').innerText = `⏳ ప్రాసెస్ అవుతోంది: ${file.name}...`;
     const img = new Image();
     const reader = new FileReader();
 
-    reader.onload = function(e) {
-      img.src = e.target.result;
-    };
-
+    reader.onload = function(e) { img.src = e.target.result; };
     img.onload = function() {
       const canvas = document.createElement('canvas');
       canvas.width = 512;
@@ -440,45 +460,9 @@
 
       document.getElementById('iconPreviewImg').src = dataUrl;
       document.getElementById('iconPreviewBox').style.display = 'flex';
-      document.getElementById('iconStatus').innerText = `✅ సిద్ధమైంది: ${(iconBase64.length * 0.75 / 1024).toFixed(1)} KB కి ఆప్టిమైజ్ చేయబడింది`;
+      document.getElementById('iconStatus').innerText = `✅ సిద్ధమైంది: 512x512 PNG`;
     };
-
-    reader.onerror = function() {
-      alert("ఇమేజ్ రీడ్ చేయడం సాధ్యం కాలేదు. దయచేసి వేరే ఫోటో ఎంచుకోండి.");
-    };
-
     reader.readAsDataURL(file);
-  }
-
-  function prepareUpdateApp(pkg) {
-    const app = cachedApps.find(a => a.package_name === pkg);
-    if (!app) return;
-
-    document.getElementById('appName').value = app.name;
-    document.getElementById('pkgName').value = app.package_name;
-
-    const currentCode = parseInt(app.version_code) || 1;
-    document.getElementById('vCode').value = currentCode + 1;
-
-    const vParts = (app.version || "1.0.0").split('.');
-    if (vParts.length === 3 && !isNaN(vParts[2])) {
-      vParts[2] = parseInt(vParts[2]) + 1;
-      document.getElementById('vName').value = vParts.join('.');
-    } else {
-      document.getElementById('vName').value = app.version + ".1";
-    }
-
-    if (app.source_type) {
-      document.getElementById('sourceType').value = app.source_type;
-      toggleSource();
-    }
-
-    if (app.web_url) {
-      document.getElementById('webUrl').value = app.web_url;
-    }
-
-    document.getElementById('appFormCard').scrollIntoView({ behavior: 'smooth' });
-    alert(`🔄 "${app.name}" వివరాలు లోడ్ అయ్యాయి! Version Code: ${currentCode + 1} కి మారింది. కొత్త కోడ్/ఫైల్స్ జతచేసి నేరుగా Build బటన్ నొక్కండి.`);
   }
 
   function utf8ToBase64(str) {
@@ -487,16 +471,14 @@
     }));
   }
 
-  // పాత మరియు కొత్త యాప్స్ అన్నింటికీ ఆటోమేటిక్ కీ జనరేటర్ ఫంక్షన్
-  function generateAppKey(pkgName) {
+  function calculateKey(pkg) {
     let hash = 0;
-    const str = pkgName + "secret_pass_2026";
+    const str = pkg + "secret_pass_2026";
     for (let i = 0; i < str.length; i++) {
       hash = ((hash << 5) - hash) + str.charCodeAt(i);
       hash |= 0;
     }
-    const hex = Math.abs(hash).toString(16).toUpperCase().padStart(8, '0').substring(0, 8);
-    return "KEY-" + hex;
+    return "KEY-" + Math.abs(hash).toString(16).toUpperCase().padStart(8, '0').substring(0, 8);
   }
 
   async function uploadFileToGitHub(repo, token, path, contentBase64) {
@@ -515,7 +497,7 @@
     } catch(e){}
 
     const body = {
-      message: `Update: ${path}`,
+      message: `Update Ledger: ${path}`,
       content: contentBase64
     };
     if (sha) body.sha = sha;
@@ -531,7 +513,7 @@
 
     if (!res.ok) {
       const err = await res.json();
-      throw new Error(`ఫైల్ అప్‌డేట్ విఫలమైంది (${path}): ` + (err.message || res.statusText));
+      throw new Error(`అప్‌డేట్ విఫలమైంది: ` + (err.message || res.statusText));
     }
   }
 
@@ -539,101 +521,178 @@
     const token = document.getElementById('ghToken').value.trim();
     const repo = detectRepo();
     if (!token || !repo) {
-      alert("GitHub Token నమోదు చేయండి!");
+      alert("దయచేసి మీ GitHub PAT Token నమోదు చేయండి!");
       return;
     }
 
     const app = cachedApps.find(a => a.package_name === pkgName);
     if (!app) return;
 
-    const confirmVerify = confirm(`"${app.name}" కు క్లయింట్ నుండి పేమెంట్ అందిందా?\n\nపేమెంట్ వెరిఫై చేసి లైసెన్స్ కీని అన్‌లాక్ చేయాలా?`);
-    if (!confirmVerify) return;
+    const newStatus = !app.is_paid;
+    const confirmMsg = newStatus 
+      ? `"${app.name}" కు క్లయింట్ నుండి పేమెంట్ అందిందా?\n\nపేమెంట్ వెరిఫై చేసి లైసెన్స్ కీని అన్‌లాక్ చేయాలా?`
+      : `స్టేటస్‌ను మళ్లీ Unpaid గా మార్చాలా?`;
 
-    app.is_paid = !app.is_paid;
-    if (!app.license_key) {
-      app.license_key = generateAppKey(app.package_name);
-    }
+    if (!confirm(confirmMsg)) return;
+
+    app.is_paid = newStatus;
+    app.license_key = calculateKey(app.package_name);
+    app.verified_at = newStatus ? new Date().toLocaleString() : null;
 
     try {
       const updatedJson = JSON.stringify(cachedApps, null, 2);
       await uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(updatedJson));
-      alert(`✅ "${app.name}" పేమెంట్ వెరిఫై చేయబడింది! లైసెన్స్ కీ అన్‌లాక్ అయింది.`);
-      loadApps();
+      alert(newStatus ? `✅ పేమెంట్ వెరిఫై అయింది! లైసెన్స్ కీ అన్‌లాక్ చేయబడింది: ${app.license_key}` : "స్టేటస్ మార్చబడింది.");
+      renderAppCards();
     } catch (e) {
-      alert("స్టేటస్ అప్‌డేట్ విఫలమైంది: " + e.message);
+      alert("లోపం: " + e.message);
     }
   }
 
   function copyKey(key) {
     navigator.clipboard.writeText(key);
-    alert(`🔑 లైసెన్స్ కీ కాపీ చేయబడింది:\n\n${key}\n\nదీన్ని మీ క్లయింట్‌కు పంపండి!`);
+    alert(`🔑 లైసెన్స్ కీ కాపీ చేయబడింది:\n\n${key}\n\nఈ కీ ని క్లయింట్‌కు పంపవచ్చు!`);
   }
 
-  async function startTrackingBuild(repo, token) {
-    const statusBox = document.getElementById('statusBox');
-    const statusTitle = document.getElementById('statusTitle');
-    const statusBadge = document.getElementById('statusBadge');
-    const statusDetail = document.getElementById('statusDetail');
-    const progressBar = document.getElementById('progressBar');
-    const actionLink = document.getElementById('actionLink');
+  // వాట్సాప్ ద్వారా కీ పంపడం
+  function sendWhatsApp(clientPhone, appName, apkUrl, key) {
+    let phone = (clientPhone || "").replace(/[^0-9]/g, '');
+    if (!phone.startsWith('91') && phone.length === 10) phone = '91' + phone;
 
-    statusBox.style.display = 'block';
-    statusTitle.innerText = "⚡ బిల్డ్ ప్రాసెస్ ప్రారంభమైంది...";
-    statusBadge.className = "badge badge-progress";
-    statusBadge.innerText = "Queueing...";
-    progressBar.style.width = "15%";
-    statusDetail.innerText = "క్లౌడ్ సర్వర్‌లో Gradle & Android SDK ప్రారంభమవుతోంది...";
+    const msg = `నమస్తే!\n\nమీ "${appName}" ఆండ్రాయిడ్ యాప్ విజయవంతంగా సిద్ధమైంది.\n\n📥 యాప్ డౌన్‌లోడ్ లింక్:\n${apkUrl}\n\n🔑 మీ యాక్టివేషన్ లైసెన్స్ కీ:\n${key}\n\nయాప్ ఇన్‌స్టాల్ చేసుకుని ఓపెన్ చేసిన తర్వాత ఈ కీ ని నమోదు చేసి యాక్టివేట్ చేసుకోండి. ధన్యవాదాలు!`;
+    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+  }
 
-    if (statusPoller) clearInterval(statusPoller);
+  // ఈమెయిల్ ద్వారా కీ పంపడం (Client Email Direct Mailer)
+  function sendEmailKey(clientEmail, appName, apkUrl, key) {
+    if (!clientEmail || !clientEmail.includes('@')) {
+      alert("ఈ క్లయింట్‌కు ఈమెయిల్ ఐడీ నమోదు చేయలేదు!");
+      return;
+    }
+    const subject = encodeURIComponent(`మీ ఆండ్రాయిడ్ యాప్ రెడీ: ${appName} - లైసెన్స్ కీ & డౌన్‌లోడ్ లింక్`);
+    const body = encodeURIComponent(
+`నమస్తే,
 
-    let checkCount = 0;
+మీ "${appName}" ఆండ్రాయిడ్ అప్లికేషన్ విజయవంతంగా సిద్ధమైంది.
 
-    statusPoller = setInterval(async () => {
-      checkCount++;
-      try {
-        const res = await fetch(`https://api.github.com/repos/${repo}/actions/runs?per_page=1`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) return;
+📥 యాప్ డౌన్‌లోడ్ లింక్ (APK):
+${apkUrl}
 
-        const data = await res.json();
-        if (data.workflow_runs && data.workflow_runs.length > 0) {
-          const run = data.workflow_runs[0];
-          actionLink.innerHTML = `<a href="${run.html_url}" target="_blank" style="color:var(--accent);">🔗 GitHub Actions లైవ్ లాగ్స్ చూడండి</a>`;
+🔑 మీ పర్మనెంట్ యాక్టివేషన్ లైసెన్స్ కీ:
+${key}
 
-          if (run.status === "queued") {
-            statusBadge.innerText = "Queued";
-            progressBar.style.width = "30%";
-            statusDetail.innerText = "వర్చువల్ మెషీన్ కోసం వేచి ఉంది...";
-          } else if (run.status === "in_progress") {
-            statusBadge.innerText = "బిల్డ్ అవుతోంది...";
-            progressBar.style.width = "65%";
-            statusDetail.innerText = "కోడ్ సింక్ అయి APK & AAB ఫైల్స్ కంపైల్ అవుతున్నాయి...";
-          } else if (run.status === "completed") {
-            clearInterval(statusPoller);
-            if (run.conclusion === "success") {
-              statusBadge.className = "badge badge-success";
-              statusBadge.innerText = "✅ పూర్తయింది";
-              progressBar.style.width = "100%";
-              statusTitle.innerText = "🎉 యాప్ బిల్డ్ విజయవంతమైంది!";
-              statusDetail.innerText = "APK మరియు AAB సిద్ధమయ్యాయి. కింద లిస్ట్‌లో పేమెంట్ వెరిఫై చేసి కీ పొందండి.";
-              loadApps();
-            } else {
-              statusBadge.className = "badge badge-failed";
-              statusBadge.innerText = "❌ ఫెయిల్ అయింది";
-              progressBar.style.width = "100%";
-              progressBar.style.background = "#ef4444";
-              statusTitle.innerText = "బిల్డ్ ఫెయిల్ అయింది!";
-              statusDetail.innerText = "లాగ్స్ చెక్ చేయండి.";
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Status check failed", err);
-      }
+యాప్ ఇన్‌స్టాలేషన్ ప్రాసెస్:
+1. పైన ఉన్న లింక్ ద్వారా APK ని డౌన్‌లోడ్ చేసుకుని ఇన్‌స్టాల్ చేయండి.
+2. యాప్ ఓపెన్ చేయగానే కనిపించే స్క్రీన్ వద్ద మీ లైసెన్స్ కీ ని ఎంటర్ చేసి 'Activate' బటన్ నొక్కండి.
+3. యాప్ శాశ్వతంగా అన్‌లాక్ అవుతుంది.
 
-      if (checkCount > 150) clearInterval(statusPoller);
-    }, 4000);
+ధన్యవాదాలు,
+డెవలప్‌మెంట్ టీమ్`
+    );
+
+    window.open(`mailto:${clientEmail}?subject=${subject}&body=${body}`, '_blank');
+  }
+
+  function renderAppCards() {
+    const list = document.getElementById('appsList');
+    list.innerHTML = '';
+
+    if (!cachedApps || cachedApps.length === 0) {
+      list.innerHTML = '<div style="color:var(--text-muted); padding:10px;">ఇంకా ఏ యాప్స్ నిర్మించలేదు.</div>';
+      return;
+    }
+
+    cachedApps.slice().reverse().forEach(app => {
+      const isPaid = app.is_paid || false;
+      const key = app.license_key || calculateKey(app.package_name);
+      const cName = app.client_name || "పేర్కొనలేదు";
+      const cEmail = app.client_email || "ఈమెయిల్ లేదు";
+      const cPhone = app.client_phone || "ఫోన్ లేదు";
+      const cFee = app.client_fee ? `₹ ${app.client_fee}` : "పేర్కొనలేదు";
+
+      list.innerHTML += `
+        <div class="client-card">
+          <div class="client-header">
+            <div>
+              <strong style="font-size:16px; color:#fff;">${app.name}</strong>
+              <span style="color:var(--accent); font-size:12px; margin-left:6px;">v${app.version} (Code: ${app.version_code})</span>
+              <span class="badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}" style="margin-left:8px;">
+                ${isPaid ? '✅ Paid & Verified' : '⏳ Unpaid (Locked)'}
+              </span>
+              <br>
+              <small style="color:var(--text-muted); font-family:monospace;">${app.package_name}</small>
+            </div>
+            <div class="btn-group">
+              <a href="${app.apk_url}" target="_blank">📥 APK</a>
+              <a href="${app.aab_url}" target="_blank" class="aab">📦 AAB</a>
+            </div>
+          </div>
+
+          <!-- Client Ledger Details Grid with Email -->
+          <div class="client-info-table">
+            <div>
+              <div class="info-label">👤 క్లయింట్ పేరు</div>
+              <div class="info-value">${cName}</div>
+            </div>
+            <div>
+              <div class="info-label">📧 ఈమెయిల్ (Email)</div>
+              <div class="info-value">${cEmail}</div>
+            </div>
+            <div>
+              <div class="info-label">📞 ఫోన్ / వాట్సాప్</div>
+              <div class="info-value">${cPhone}</div>
+            </div>
+            <div>
+              <div class="info-label">💰 అంగీకరించిన ఫీజు</div>
+              <div class="info-value" style="color:#38bdf8;">${cFee}</div>
+            </div>
+          </div>
+
+          <!-- License Key Box -->
+          <div class="key-display-box">
+            <div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:bold;">
+                🔑 క్లయింట్ లైసెన్స్ కీ:
+              </div>
+              <div style="margin-top:4px;">
+                ${isPaid 
+                  ? `<span class="key-code">${key}</span>` 
+                  : '<span style="color:var(--danger); font-size:13px; font-weight:bold;">🔒 పేమెంట్ వెరిఫై చేసేంతవరకు లాక్ చేయబడింది</span>'}
+              </div>
+            </div>
+
+            <div class="btn-group">
+              <button class="btn-verify" onclick="togglePayment('${app.package_name}')">
+                ${isPaid ? 'Mark Unpaid' : '💰 Verify Payment'}
+              </button>
+              ${isPaid ? `
+                <button class="btn-copy" onclick="copyKey('${key}')">📋 Copy Key</button>
+                <button class="btn-mail" onclick="sendEmailKey('${app.client_email}', '${app.name}', '${app.apk_url}', '${key}')">
+                  📧 Email Key
+                </button>
+                <button class="btn-whatsapp" onclick="sendWhatsApp('${app.client_phone}', '${app.name}', '${app.apk_url}', '${key}')">
+                  📲 WhatsApp
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  async function loadApps() {
+    const repo = detectRepo();
+    if (!repo) return;
+    try {
+      const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/apps.json?t=${Date.now()}`);
+      if (!res.ok) return;
+      cachedApps = await res.json();
+      renderAppCards();
+    } catch(e) {
+      console.log("apps.json ఇంకా రాలేదు.");
+    }
   }
 
   async function triggerBuild() {
@@ -641,7 +700,7 @@
     let repo = detectRepo();
 
     if (!repo) {
-      repo = prompt("GitHub Repo నమోదు చేయండి (ఉదా: username/apk-builder):");
+      repo = prompt("GitHub Repo నమోదు చేయండి (username/apk-builder):");
       if (repo) localStorage.setItem('custom_gh_repo', repo);
       else return;
     }
@@ -650,13 +709,11 @@
       alert("దయచేసి మీ GitHub PAT Token నమోదు చేయండి!");
       return;
     }
-
     localStorage.setItem('gh_token', token);
 
     const name = document.getElementById('appName').value.trim();
     let rawPkg = document.getElementById('pkgName').value.trim().toLowerCase();
     const pkg = rawPkg.replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '');
-
     const vName = document.getElementById('vName').value.trim();
     const vCode = parseInt(document.getElementById('vCode').value) || 1;
     const sourceType = document.getElementById('sourceType').value;
@@ -692,8 +749,7 @@
           buildBtn.disabled = false;
           return;
         }
-        const htmlBase64 = utf8ToBase64(rawHtmlCode);
-        await uploadFileToGitHub(repo, token, 'build_cache/index.html', htmlBase64);
+        await uploadFileToGitHub(repo, token, 'build_cache/index.html', utf8ToBase64(rawHtmlCode));
         hasCustomHtml = true;
       }
 
@@ -705,13 +761,15 @@
         version_code: vCode,
         source_type: sourceType,
         web_url: document.getElementById('webUrl').value.trim(),
+        client_name: document.getElementById('clientName').value.trim(),
+        client_email: document.getElementById('clientEmail').value.trim(),
+        client_phone: document.getElementById('clientPhone').value.trim(),
+        client_fee: document.getElementById('clientFee').value.trim(),
         has_custom_html: hasCustomHtml,
         has_custom_zip: hasCustomZip,
         has_custom_icon: hasCustomIcon,
         orientation: document.getElementById('orientation').value,
         cleartext: document.getElementById('cleartext').value === "true",
-        fullscreen: document.getElementById('fullscreen').value === "true",
-        status_color: document.getElementById('statusColor').value.trim(),
         permissions: {
           internet: document.getElementById('permInternet').checked,
           camera: document.getElementById('permCamera').checked,
@@ -754,63 +812,55 @@
     }
   }
 
-  async function loadApps() {
-    const repo = detectRepo();
-    if (!repo) return;
-    try {
-      const res = await fetch(`https://raw.githubusercontent.com/${repo}/main/apps.json?t=${Date.now()}`);
-      if (!res.ok) return;
-      cachedApps = await res.json();
-      const list = document.getElementById('appsList');
-      list.innerHTML = '';
+  async function startTrackingBuild(repo, token) {
+    const statusBox = document.getElementById('statusBox');
+    const statusBadge = document.getElementById('statusBadge');
+    const statusDetail = document.getElementById('statusDetail');
+    const progressBar = document.getElementById('progressBar');
+    const actionLink = document.getElementById('actionLink');
 
-      if (cachedApps.length === 0) {
-        list.innerHTML = 'ఇంకా ఏ యాప్స్ నిర్మించలేదు.';
-        return;
-      }
+    statusBox.style.display = 'block';
+    progressBar.style.width = "15%";
+    statusDetail.innerText = "క్లౌడ్ సర్వర్ సిద్ధమవుతోంది...";
 
-      cachedApps.slice().reverse().forEach(app => {
-        const isPaid = app.is_paid || false;
-        const key = app.license_key || generateAppKey(app.package_name);
-        app.license_key = key;
+    if (statusPoller) clearInterval(statusPoller);
+    let checkCount = 0;
 
-        list.innerHTML += `
-          <div class="app-card">
-            <div class="app-header">
-              <div>
-                <strong>${app.name}</strong> 
-                <span style="color:var(--accent); font-size:12px;">v${app.version} (Code: ${app.version_code})</span>
-                <span class="badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}" style="margin-left:8px;">
-                  ${isPaid ? '✅ Paid & Verified' : '⏳ Unpaid (Locked)'}
-                </span>
-                <br>
-                <small style="color:var(--text-muted);">${app.package_name}</small>
-              </div>
-              <div class="btn-group">
-                <button class="btn-update" onclick="prepareUpdateApp('${app.package_name}')">🔄 Update</button>
-                <a href="${app.apk_url}" target="_blank">📥 APK</a>
-                <a href="${app.aab_url}" target="_blank" class="aab">📦 AAB</a>
-              </div>
-            </div>
+    statusPoller = setInterval(async () => {
+      checkCount++;
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}/actions/runs?per_page=1`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return;
 
-            <div class="license-panel">
-              <div style="font-size: 13px;">
-                <strong>క్లయింట్ లైసెన్స్ కీ:</strong> 
-                ${isPaid ? `<code style="background:#0b1120; padding:4px 8px; border-radius:4px; color:#38bdf8; font-weight:bold;">${key}</code>` : '<span style="color:#ef4444;">🔒 పేమెంట్ వెరిఫై చేయబడలేదు</span>'}
-              </div>
-              <div style="display:flex; gap:8px;">
-                <button class="btn-pay" onclick="togglePayment('${app.package_name}')">
-                  ${isPaid ? 'Mark as Unpaid' : '💰 Verify Payment'}
-                </button>
-                ${isPaid ? `<button class="btn-key" onclick="copyKey('${key}')">📋 Copy Key</button>` : ''}
-              </div>
-            </div>
-          </div>
-        `;
-      });
-    } catch(e) {
-      console.log("apps.json ఇంకా రాలేదు.");
-    }
+        const data = await res.json();
+        if (data.workflow_runs && data.workflow_runs.length > 0) {
+          const run = data.workflow_runs[0];
+          actionLink.innerHTML = `<a href="${run.html_url}" target="_blank" style="color:var(--accent);">🔗 Actions లైవ్ లాగ్స్ చూడండి</a>`;
+
+          if (run.status === "in_progress") {
+            statusBadge.innerText = "బిల్డ్ అవుతోంది...";
+            progressBar.style.width = "65%";
+            statusDetail.innerText = "APK & AAB కంపైల్ అవుతున్నాయి (3-4 నిమిషాలు)...";
+          } else if (run.status === "completed") {
+            clearInterval(statusPoller);
+            if (run.conclusion === "success") {
+              statusBadge.innerText = "✅ పూర్తయింది";
+              statusBadge.style.background = "#22c55e";
+              progressBar.style.width = "100%";
+              statusDetail.innerText = "యాప్ సిద్ధమైంది! కింద లెడ్జర్‌లో వివరాలు చూడండి.";
+              loadApps();
+            } else {
+              statusBadge.innerText = "❌ ఫెయిల్ అయింది";
+              statusBadge.style.background = "#ef4444";
+              progressBar.style.width = "100%";
+            }
+          }
+        }
+      } catch (err) {}
+      if (checkCount > 150) clearInterval(statusPoller);
+    }, 4000);
   }
 </script>
 </body>
