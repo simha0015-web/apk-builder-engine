@@ -53,6 +53,7 @@ jobs:
           npx cap init "$APP_NAME" "$PKG_NAME" --web-dir "www"
           mkdir -p www
 
+          # 1. URL Source Configuration
           if [ "$SOURCE_TYPE" = "url" ]; then
             cat << 'EOF' > www/index.html
             <!DOCTYPE html>
@@ -70,8 +71,10 @@ jobs:
             </body>
             </html>
           EOF
+          # 2. ZIP Source
           elif [ "$SOURCE_TYPE" = "zip" ] && [ "$HAS_ZIP" = "true" ]; then
             unzip -o ../build_cache/project.zip -d www/
+          # 3. Direct Large HTML File (No payload limit)
           elif [ "$SOURCE_TYPE" = "raw_html" ] && [ "$HAS_HTML" = "true" ]; then
             cp ../build_cache/index.html www/index.html
           elif [ "$SOURCE_TYPE" = "raw_html" ]; then
@@ -417,6 +420,10 @@ jobs:
               version: payload.version_name,
               version_code: payload.version_code,
               source_type: payload.source_type,
+              client_name: payload.client_name || '',
+              client_email: payload.client_email || '',
+              client_phone: payload.client_phone || '',
+              client_fee: payload.client_fee || '',
               apk_url: '${APK_URL}',
               aab_url: '${AAB_URL}',
               is_paid: existingApp.is_paid || false,
