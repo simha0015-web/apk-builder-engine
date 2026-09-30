@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pro Android App Studio & Automated Client Billing</title>
+  <title>Pro Android App Studio & Multi-Client CRM</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -89,7 +89,6 @@
       margin-top: 20px; 
     }
 
-    /* App Card & Client List */
     .app-card { 
       background: #0d1527; 
       border: 1px solid var(--border); 
@@ -178,33 +177,33 @@
     .btn-copy { background: #38bdf8 !important; color: #000 !important; }
     .btn-edit { background: #475569 !important; color: white !important; }
     .btn-qr { background: #8b5cf6 !important; color: white !important; }
-    .btn-add-client { background: #8b5cf6 !important; color: white !important; padding: 7px 12px; font-weight: bold; }
+    .btn-add-client { background: #8b5cf6 !important; color: white !important; padding: 7px 14px; font-weight: bold; }
     .btn-del { background: #ef4444 !important; color: white !important; }
 
     .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
     .badge-paid { background: #10b981; color: #000; }
     .badge-unpaid { background: #ef4444; color: #fff; }
 
-    /* Modal Overlay */
     .modal-overlay {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
-      z-index: 9999;
+      background: rgba(0,0,0,0.85);
+      z-index: 99999;
       justify-content: center;
       align-items: center;
       padding: 15px;
       box-sizing: border-box;
     }
     .modal-content {
-      background: var(--card);
+      background: #151d30;
       border: 1px solid var(--accent);
       border-radius: 12px;
       max-width: 480px;
       width: 100%;
       padding: 22px;
       box-sizing: border-box;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
     }
 
     #statusBox { 
@@ -223,23 +222,15 @@
 
 <div class="container">
   <div class="header">
-    <h1>🚀 Android Cloud App Studio & Client Automation</h1>
-    <p>యాప్ నిర్మాణం, UPI QR ఇన్వాయిస్ డెలివరీ & ఆటోమేటిక్ లైసెన్స్ కీ మెయిలర్</p>
+    <h1>🚀 Android Cloud App Studio & Client CRM</h1>
+    <p>యాప్ నిర్మాణం, ఆటోమేటిక్ UPI QR ఇన్వాయిస్ & లైసెన్స్ మేనేజ్‌మెంట్</p>
   </div>
 
   <div class="card">
-    <h2>🔑 అడ్మిన్ సెటప్ & బ్యాంకింగ్ (UPI Details)</h2>
-    <div class="grid">
-      <div>
-        <label>GitHub Personal Access Token (PAT):</label>
-        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx">
-      </div>
-      <div>
-        <label>మీ UPI ID (GPay / PhonePe / Paytm):</label>
-        <input type="text" id="myUpiId" placeholder="yourname@okhdfcbank / 9876543210@ybl">
-        <small style="color:var(--text-muted); font-size:11px;">క్లయింట్లకు పంపే ప్రతి QR కోడ్ ఈ UPI ID కి లింక్ అవుతుంది.</small>
-      </div>
-    </div>
+    <h2>🔑 అడ్మిన్ యాక్సెస్</h2>
+    <label>GitHub Personal Access Token (PAT):</label>
+    <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx">
+    <small style="color:var(--text-muted); font-size:11px;">ఇది మీ బ్రౌజర్‌లో మాత్రమే సేవ్ అవుతుంది. పేమెంట్ సిస్టమ్ సురక్షితంగా కాన్ఫిగర్ చేయబడింది.</small>
   </div>
 
   <div class="card" id="appFormCard">
@@ -247,7 +238,7 @@
     <div class="grid">
       <div>
         <label>App Name:</label>
-        <input type="text" id="appName" placeholder="Multi-Vendor Grocery App">
+        <input type="text" id="appName" placeholder="Multi-Store Grocery App">
       </div>
       <div>
         <label>Package Name (Application ID):</label>
@@ -322,14 +313,14 @@
     <input type="hidden" id="modalTargetPkg">
     <label>క్లయింట్ / బిజినెస్ పేరు:</label>
     <input type="text" id="newClientName" placeholder="ఉదా: శ్రీనివాస్ మెడికల్స్">
-    <label>క్లయింట్ ఈమెయిల్ (కీ ఈ మెయిల్ కే వెళ్తుంది):</label>
-    <input type="email" id="newClientEmail" placeholder="srinivas@gmail.com">
+    <label>క్లయింట్ ఈమెయిల్:</label>
+    <input type="email" id="newClientEmail" placeholder="client@example.com">
     <label>వాట్సాప్ / ఫోన్ నంబర్:</label>
     <input type="text" id="newClientPhone" placeholder="+91 9876543210">
     <label>డీల్ కుదుర్చుకున్న ఫీజు (Fee ₹):</label>
     <input type="number" id="newClientFee" placeholder="₹ 5000">
     <div style="display:flex; gap:10px; margin-top:18px;">
-      <button onclick="saveNewClient()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">➕ జోడించి ఇన్వాయిస్ సిద్ధం చేయండి</button>
+      <button onclick="saveNewClient()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">➕ జోడించండి</button>
       <button onclick="closeModal('addClientModal')" style="background:#475569; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">రద్దు</button>
     </div>
   </div>
@@ -355,13 +346,13 @@
     <input type="number" id="editClientFee">
 
     <div style="display:flex; gap:10px; margin-top:18px;">
-      <button onclick="saveClientEdit()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">💾 వివరాలు సేవ్ చేయండి</button>
+      <button onclick="saveClientEdit()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">💾 సేవ్ చేయండి</button>
       <button onclick="closeModal('editClientModal')" style="background:#475569; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">రద్దు</button>
     </div>
   </div>
 </div>
 
-<!-- Modal 3: Dynamic UPI QR Code & Payment Request -->
+<!-- Modal 3: Secure UPI QR Code -->
 <div id="qrModal" class="modal-overlay">
   <div class="modal-content" style="text-align:center;">
     <h3 style="margin-top:0; color:var(--accent);">📲 UPI పేమెంట్ QR కోడ్</h3>
@@ -370,7 +361,7 @@
       <img id="qrImage" src="" alt="UPI QR Code" style="width:200px; height:200px; display:block;">
     </div>
     <div id="qrAmountText" style="font-size:18px; font-weight:bold; color:#10b981; margin-top:12px;"></div>
-    <p style="font-size:12px; color:var(--text-muted); margin-top:6px;">పేమెంట్ పూర్తయిన తర్వాత డ్యాష్‌బోర్డ్‌‌లో <b>Verify</b> నొక్కగానే కీ జెనరేట్ అయి క్లయింట్ మెయిల్‌కు వెళ్తుంది.</p>
+    <p style="font-size:12px; color:var(--text-muted); margin-top:6px;">పేమెంట్ పూర్తయిన తర్వాత డ్యాష్‌బోర్డ్‌లో <b>Verify</b> నొక్కగానే కీ జెనరేట్ అయి క్లయింట్ మెయిల్‌కు వెళ్తుంది.</p>
     <div style="display:flex; gap:10px; margin-top:15px;">
       <button onclick="copyUpiLink()" style="background:#38bdf8; color:#000; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">🔗 UPI Link కాపీ</button>
       <button onclick="closeModal('qrModal')" style="background:#475569; color:#fff; border:none; padding:10px; border-radius:6px; cursor:pointer;">క్లోజ్</button>
@@ -379,6 +370,9 @@
 </div>
 
 <script>
+  // మీ ఫిక్స్‌డ్ సీక్రెట్ UPI ID (స్క్రీన్‌పై ఎక్కడా కనిపించదు)
+  const SECURE_UPI_ID = "8050166319@ybl";
+
   let zipBase64 = "";
   let iconBase64 = "";
   let statusPoller = null;
@@ -399,8 +393,6 @@
   window.onload = function() {
     const savedToken = localStorage.getItem('gh_token');
     if (savedToken) document.getElementById('ghToken').value = savedToken;
-    const savedUpi = localStorage.getItem('my_upi_id');
-    if (savedUpi) document.getElementById('myUpiId').value = savedUpi;
     loadApps();
   };
 
@@ -477,9 +469,10 @@
       headers: { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error("GitHub లో డేటా సేవ్ కాలేదు.");
+    if (!res.ok) throw new Error("GitHub లో డేటా సేవ్ కాలేదు. PAT Token సరైనదేనా చెక్ చేసుకోండి.");
   }
 
+  // Add Client Modal ఓపెన్ చేసే ఫంక్షన్
   function openAddClientModal(pkg) {
     document.getElementById('modalTargetPkg').value = pkg;
     document.getElementById('newClientName').value = '';
@@ -509,12 +502,14 @@
     }
 
     const app = cachedApps.find(a => a.package_name === pkg);
-    if (!app) return;
+    if (!app) {
+      alert("యాప్ సమాచారం లభించలేదు!");
+      return;
+    }
     if (!app.clients) app.clients = [];
 
     const clientSlug = "C" + Math.floor(1000 + Math.random() * 9000);
 
-    // క్లయింట్ ప్రారంభంలో Unpaid గా ఉంటారు, కీ లాక్‌లో ఉంటుంది
     app.clients.push({
       id: clientSlug,
       name: name,
@@ -529,7 +524,7 @@
     try {
       await uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(JSON.stringify(cachedApps, null, 2)));
       closeModal('addClientModal');
-      alert(`✅ క్లయింట్ "${name}" విజయవంతంగా జోడించబడ్డారు!\n\nఇప్పుడు మీరు వీరికి WhatsApp లేదా Email ద్వారా QR కోడ్ పంపవచ్చు.`);
+      alert(`✅ క్లయింట్ "${name}" విజయవంతంగా జోడించబడ్డారు!`);
       renderAppCards();
     } catch(e) {
       alert("లోపం: " + e.message);
@@ -583,37 +578,25 @@
     }
   }
 
-  // పేమెంట్ కోసం QR ఇన్వాయిస్‌‌ను వాట్సాప్‌లో పంపడం (Step 1)
   function sendPaymentQrOnWhatsApp(phone, clientName, appName, fee) {
-    const myUpi = document.getElementById('myUpiId').value.trim();
-    if (!myUpi) {
-      alert("పేజీ పైభాగంలో మీ UPI ID నమోదు చేయండి!");
-      return;
-    }
     let p = (phone || "").replace(/[^0-9]/g, '');
     if (!p.startsWith('91') && p.length === 10) p = '91' + p;
 
-    const payLink = `upi://pay?pa=${myUpi}&pn=Developer&am=${fee || 0}&cu=INR&tn=${encodeURIComponent(appName + ' Fee')}`;
+    const payLink = `upi://pay?pa=${SECURE_UPI_ID}&pn=AppDeveloper&am=${fee || 0}&cu=INR&tn=${encodeURIComponent(appName + ' Fee')}`;
     const qrImgLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payLink)}`;
 
-    const msg = `నమస్తే ${clientName} గారూ!\n\nమీ "${appName}" ఆండ్రాయిడ్ యాప్ డెవలప్‌మెంట్ పూర్తయింది.\n\n💰 చెల్లించాల్సిన ఫీజు: ₹ ${fee || '0'}\n\n📲 ఈ క్రింది లింక్ లేదా QR కోడ్ ద్వారా మీ పేమెంట్ పూర్తి చేయండి:\n${qrImgLink}\n\nలేదా డైరెక్ట్ UPI పేమెంట్ లింక్:\n${payLink}\n\nమీరు పేమెంట్ పూర్తి చేసిన వెంటనే మీ యాప్ డౌన్‌లోడ్ లింక్ మరియు మీ వ్యక్తిగత యాక్టివేషన్ లైసెన్స్ కీ మీ ఈమెయిల్‌కు అందుతాయి. ధన్యవాదాలు!`;
+    const msg = `నమస్తే ${clientName} గారూ!\n\nమీ "${appName}" ఆండ్రాయిడ్ యాప్ డెవలప్‌మెంట్ పూర్తయింది.\n\n💰 చెల్లించాల్సిన ఫీజు: ₹ ${fee || '0'}\n\n📲 ఈ క్రింది లింక్ ద్వారా QR కోడ్ ఓపెన్ చేసి GPay/PhonePe ద్వారా పేమెంట్ పూర్తి చేయండి:\n${qrImgLink}\n\nలేదా డైరెక్ట్ UPI పేమెంట్ లింక్:\n${payLink}\n\nమీరు పేమెంట్ పూర్తి చేసిన వెంటనే మీ యాప్ డౌన్‌లోడ్ లింక్ మరియు మీ వ్యక్తిగత యాక్టివేషన్ లైసెన్స్ కీ మీ ఈమెయిల్‌కు అందుతాయి. ధన్యవాదాలు!`;
 
     window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
-  // పేమెంట్ కోసం QR ఇన్వాయిస్‌ను ఈమెయిల్‌లో పంపడం (Step 1)
   function sendPaymentQrOnEmail(email, clientName, appName, fee) {
-    const myUpi = document.getElementById('myUpiId').value.trim();
-    if (!myUpi) {
-      alert("పేజీ పైభాగంలో మీ UPI ID నమోదు చేయండి!");
-      return;
-    }
     if (!email || !email.includes('@')) {
       alert("క్లయింట్ ఈమెయిల్ లేదు! 'Edit' నొక్కి ఈమెయిల్ జోడించండి.");
       return;
     }
 
-    const payLink = `upi://pay?pa=${myUpi}&pn=Developer&am=${fee || 0}&cu=INR&tn=${encodeURIComponent(appName + ' Fee')}`;
+    const payLink = `upi://pay?pa=${SECURE_UPI_ID}&pn=AppDeveloper&am=${fee || 0}&cu=INR&tn=${encodeURIComponent(appName + ' Fee')}`;
     const qrImgLink = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(payLink)}`;
 
     const subject = encodeURIComponent(`ఇన్వాయిస్ & పేమెంట్ QR కోడ్: ${appName} యాప్ డెవలప్‌మెంట్`);
@@ -623,12 +606,11 @@
 మీ "${appName}" ఆండ్రాయిడ్ యాప్ సిద్ధంగా ఉంది.
 
 💰 అంగీకరించిన ఫీజు మొత్తం: ₹ ${fee || '0'}
-🏦 UPI ID: ${myUpi}
 
-📲 పేమెంట్ QR కోడ్ చూడటానికి క్రింది లింక్ ఓపెన్ చేసి GPay/PhonePe ద్వారా స్కాన్ చేయండి:
+📲 పేమెంట్ QR కోడ్ చూడటానికి క్రింది లింక్ ఓపెన్ చేసి Google Pay లేదా PhonePe ద్వారా స్కాన్ చేయండి:
 ${qrImgLink}
 
-లేదా డైరెక్ట్ పేమెంట్ లింక్:
+లేదా డైరెక్ట్ UPI లింక్:
 ${payLink}
 
 పేమెంట్ పూర్తయిన వెంటనే మీ యాప్ డౌన్‌లోడ్ ఫైల్ (APK) మరియు యాక్టివేషన్ లైసెన్స్ కీ మీ ఈమెయిల్‌కు పంపబడుతుంది.
@@ -640,7 +622,6 @@ ${payLink}
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
   }
 
-  // పేమెంట్ వెరిఫై చేసి, కీ జెనరేట్ చేసి, క్లయింట్ మెయిల్‌కు ఆటోమేటిక్‌గా పంపడం (Step 2 & 3)
   async function verifyPaymentAndGenerateKey(pkg, clientId) {
     const token = document.getElementById('ghToken').value.trim();
     const repo = detectRepo();
@@ -656,19 +637,15 @@ ${payLink}
 
     if (!confirm(`"${client.name}" నుండి ₹ ${client.fee || ''} పేమెంట్ అందిందా?\n\nపేమెంట్ వెరిఫై చేసి, లైసెన్స్ కీని జెనరేట్ చేసి వారి ఈమెయిల్‌కు పంపించాలా?`)) return;
 
-    // 1. Generate Deterministic Key
     client.is_paid = true;
     client.license_key = generateClientKey(app.package_name, client.id);
     client.verified_at = new Date().toLocaleString();
 
     try {
-      // 2. Save to apps.json in GitHub
       await uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(JSON.stringify(cachedApps, null, 2)));
       renderAppCards();
 
-      alert(`🎉 పేమెంట్ వెరిఫై అయింది!\nలైసెన్స్ కీ జెనరేట్ అయింది: ${client.license_key}\n\nఇప్పుడు క్లయింట్ ఈమెయిల్‌కు కీ పంపడానికి మెయిల్ విండో ఓపెన్ అవుతుంది.`);
-
-      // 3. Trigger Email with Key & APK
+      alert(`🎉 పేమెంట్ వెరిఫై అయింది!\nలైసెన్స్ కీ జెనరేట్ అయింది: ${client.license_key}\n\nక్లయింట్ ఈమెయిల్‌కు కీ పంపడానికి మెయిల్ విండో ఓపెన్ అవుతుంది.`);
       sendKeyEmail(client.email, client.name, app.name, app.apk_url, client.license_key);
     } catch (e) {
       alert("లోపం: " + e.message);
@@ -699,10 +676,8 @@ ${key}
 2. యాప్ ఓపెన్ చేయగానే స్క్రీన్ మీద మీ లైసెన్స్ కీ ని ఎంటర్ చేసి 'Activate App' బటన్ నొక్కండి.
 3. మీ యాప్ శాశ్వతంగా అన్‌లాక్ అయిపోతుంది.
 
-ఏదైనా సహాయం కావాలంటే సంప్రదించగలరు.
-
 ధన్యవాదాలు,
-డెవలప్‌‌మెంట్ టీమ్`
+డెవలప్‌మెంట్ టీమ్`
     );
 
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
@@ -717,14 +692,8 @@ ${key}
   }
 
   function openQrModal(appName, clientName, fee) {
-    const myUpi = document.getElementById('myUpiId').value.trim();
-    if (!myUpi) {
-      alert("పేజీ పైభాగంలో మీ UPI ID నమోదు చేయండి!");
-      document.getElementById('myUpiId').focus();
-      return;
-    }
     const amount = fee || "0";
-    currentUpiPayLink = `upi://pay?pa=${myUpi}&pn=Developer&am=${amount}&cu=INR&tn=${encodeURIComponent(appName + ' Fee')}`;
+    currentUpiPayLink = `upi://pay?pa=${SECURE_UPI_ID}&pn=AppDeveloper&am=${amount}&cu=INR&tn=${encodeURIComponent(appName + ' Fee')}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUpiPayLink)}`;
 
     document.getElementById('qrImage').src = qrUrl;
@@ -744,7 +713,7 @@ ${key}
     alert(`🔑 క్లయింట్ లైసెన్స్ కీ కాపీ చేయబడింది:\n\n${key}`);
   }
 
-  function deleteClient(pkg, clientId) {
+  async function deleteClient(pkg, clientId) {
     const token = document.getElementById('ghToken').value.trim();
     const repo = detectRepo();
     if (!confirm("ఈ క్లయింట్‌ను లెడ్జర్ నుండి తొలగించాలా?")) return;
@@ -754,7 +723,7 @@ ${key}
     app.clients = app.clients.filter(c => c.id !== clientId);
 
     try {
-      uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(JSON.stringify(cachedApps, null, 2)));
+      await uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(JSON.stringify(cachedApps, null, 2)));
       renderAppCards();
     } catch(e) {
       alert("లోపం: " + e.message);
@@ -779,7 +748,7 @@ ${key}
 
       let clientsHtml = '';
       if (app.clients.length === 0) {
-        clientsHtml = '<div style="color:var(--text-muted); font-size:12px; padding:10px; background:#080d1a; border-radius:6px;">ఈ యాప్‌కు ఇంకా ఏ క్లయింట్‌నూ జోడించలేదు. "+ Add Client" నొక్కి క్లయింట్‌ను నమోదు చేయండి.</div>';
+        clientsHtml = '<div style="color:var(--text-muted); font-size:12px; padding:10px; background:#080d1a; border-radius:6px;">ఈ యాప్‌కు ఇంకా ఏ క్లయింట్‌నూ జోడించలేదు. పైన ఉన్న "+ Add Client" బటన్ నొక్కి క్లయింట్‌ను నమోదు చేయండి.</div>';
       } else {
         app.clients.forEach(c => {
           const isPaid = c.is_paid || false;
@@ -797,14 +766,12 @@ ${key}
                 <div class="btn-group">
                   <button class="btn-edit" onclick="openEditClientModal('${app.package_name}', '${c.id}')">✏️ Edit</button>
 
-                  <!-- పేమెంట్ పెండింగ్‌లో ఉన్నప్పుడు QR పంపే బటన్లు -->
                   ${!isPaid ? `
                     <button class="btn-qr" onclick="openQrModal('${app.name}', '${c.name}', '${c.fee}')">📲 QR చూడు</button>
                     <button class="btn-whatsapp" onclick="sendPaymentQrOnWhatsApp('${c.phone}', '${c.name}', '${app.name}', '${c.fee}')">📲 Send QR WA</button>
                     <button class="btn-mail" onclick="sendPaymentQrOnEmail('${c.email}', '${c.name}', '${app.name}', '${c.fee}')">📧 Send Invoice Mail</button>
                     <button class="btn-verify" onclick="verifyPaymentAndGenerateKey('${app.package_name}', '${c.id}')">💰 Verify & Release Key</button>
                   ` : `
-                    <!-- పేమెంట్ పూర్తయిన తర్వాత కీ డెలివరీ బటన్లు -->
                     <button class="btn-copy" onclick="copyKey('${c.license_key}')">📋 Copy Key</button>
                     <button class="btn-mail" onclick="sendKeyEmail('${c.email}', '${c.name}', '${app.name}', '${app.apk_url}', '${c.license_key}')">📧 Resend Key Mail</button>
                     <button class="btn-whatsapp" onclick="sendKeyWhatsApp('${c.phone}', '${c.name}', '${app.name}', '${app.apk_url}', '${c.license_key}')">📲 Resend Key WA</button>
