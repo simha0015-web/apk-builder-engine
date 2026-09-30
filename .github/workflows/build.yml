@@ -53,7 +53,6 @@ jobs:
           npx cap init "$APP_NAME" "$PKG_NAME" --web-dir "www"
           mkdir -p www
 
-          # 1. URL Source Configuration
           if [ "$SOURCE_TYPE" = "url" ]; then
             cat << 'EOF' > www/index.html
             <!DOCTYPE html>
@@ -71,10 +70,8 @@ jobs:
             </body>
             </html>
           EOF
-          # 2. ZIP Source
           elif [ "$SOURCE_TYPE" = "zip" ] && [ "$HAS_ZIP" = "true" ]; then
             unzip -o ../build_cache/project.zip -d www/
-          # 3. Direct HTML File
           elif [ "$SOURCE_TYPE" = "raw_html" ] && [ "$HAS_HTML" = "true" ]; then
             cp ../build_cache/index.html www/index.html
           elif [ "$SOURCE_TYPE" = "raw_html" ]; then
@@ -89,7 +86,7 @@ jobs:
 
           npx cap add android
 
-      - name: Force Pure Native In-App WebView Architecture
+      - name: Force Pure Native In-App Engine with License Security Lock
         run: |
           cd workspace
 
@@ -98,13 +95,32 @@ jobs:
           PKG_PATH=$(node -p "require('../config.json').package_name.replace(/\./g, '/')")
           TARGET_FILE="android/app/src/main/java/${PKG_PATH}/MainActivity.java"
           PKG_NAME=$(node -p "require('../config.json').package_name")
+          APP_NAME=$(node -p "require('../config.json').app_name")
 
-          if [ "$SOURCE_TYPE" = "url" ]; then
-            echo "Injecting Pure In-App Native Engine into MainActivity..."
-            cat << EOF > "$TARGET_FILE"
+          # ప్రతి యాప్‌కు ప్రత్యేకమైన సీక్రెట్ కీ అల్గారిథమ్
+          SECRET_SALT=$(node -e "
+            let hash = 0;
+            const str = '${PKG_NAME}' + 'secret_pass_2026';
+            for (let i = 0; i < str.length; i++) {
+              hash = ((hash << 5) - hash) + str.charCodeAt(i);
+              hash |= 0;
+            }
+            console.log(Math.abs(hash).toString(16).toUpperCase().padStart(8, '0').substring(0, 8));
+          ")
+
+          cat << EOF > "$TARGET_FILE"
           package ${PKG_NAME};
 
           import android.os.Bundle;
+          import android.content.SharedPreferences;
+          import android.graphics.Color;
+          import android.view.Gravity;
+          import android.view.View;
+          import android.widget.Button;
+          import android.widget.EditText;
+          import android.widget.LinearLayout;
+          import android.widget.TextView;
+          import android.widget.Toast;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
           import android.webkit.WebSettings;
@@ -115,11 +131,89 @@ jobs:
 
           public class MainActivity extends AppCompatActivity {
               private WebView webView;
+              private LinearLayout lockLayout;
+              private static final String PREFS_NAME = "AppLicensePrefs";
+              private static final String KEY_ACTIVATED = "is_activated";
+              private static final String APP_SALT = "${SECRET_SALT}";
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
 
+                  SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+                  boolean isActivated = prefs.getBoolean(KEY_ACTIVATED, false);
+
+                  if (isActivated) {
+                      loadMainApplication();
+                  } else {
+                      showActivationScreen();
+                  }
+              }
+
+              private void showActivationScreen() {
+                  lockLayout = new LinearLayout(this);
+                  lockLayout.setOrientation(LinearLayout.VERTICAL);
+                  lockLayout.setGravity(Gravity.CENTER);
+                  lockLayout.setPadding(60, 60, 60, 60);
+                  lockLayout.setBackgroundColor(Color.parseColor("#0b0f19"));
+
+                  TextView title = new TextView(this);
+                  title.setText("🔒 ${APP_NAME}");
+                  title.setTextSize(24);
+                  title.setTextColor(Color.parseColor("#38bdf8"));
+                  title.setGravity(Gravity.CENTER);
+                  lockLayout.addView(title);
+
+                  TextView subtitle = new TextView(this);
+                  subtitle.setText("ఈ యాప్ ఉపయోగించడానికి లైసెన్స్ కీ నమోదు చేయండి.\nకీ పొందడానికి డెవలపర్‌ని సంప్రదించండి.");
+                  subtitle.setTextSize(14);
+                  subtitle.setTextColor(Color.parseColor("#94a3b8"));
+                  subtitle.setGravity(Gravity.CENTER);
+                  subtitle.setPadding(0, 20, 0, 40);
+                  lockLayout.addView(subtitle);
+
+                  final EditText keyInput = new EditText(this);
+                  keyInput.setHint("Enter License Activation Key");
+                  keyInput.setHintTextColor(Color.parseColor("#64748b"));
+                  keyInput.setTextColor(Color.WHITE);
+                  keyInput.setPadding(40, 35, 40, 35);
+                  keyInput.setBackgroundColor(Color.parseColor("#151d30"));
+                  lockLayout.addView(keyInput);
+
+                  Button activateBtn = new Button(this);
+                  activateBtn.setText("⚡ Activate App");
+                  activateBtn.setTextColor(Color.WHITE);
+                  activateBtn.setBackgroundColor(Color.parseColor("#2563eb"));
+                  LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
+                      LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+                  );
+                  btnParams.setMargins(0, 30, 0, 0);
+                  activateBtn.setLayoutParams(btnParams);
+
+                  activateBtn.setOnClickListener(new View.OnClickListener() {
+                      @Override
+                      public void onClick(View v) {
+                          String enteredKey = keyInput.getText().toString().trim().toUpperCase();
+                          String expectedKey = "KEY-" + APP_SALT;
+
+                          if (enteredKey.equals(expectedKey)) {
+                              getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                                  .edit()
+                                  .putBoolean(KEY_ACTIVATED, true)
+                                  .apply();
+                              Toast.makeText(MainActivity.this, "✅ లైసెన్స్ యాక్టివేట్ అయింది!", Toast.LENGTH_SHORT).show();
+                              loadMainApplication();
+                          } else {
+                              Toast.makeText(MainActivity.this, "❌ చెల్లని కీ! దయచేసి సరైన కీ ఎంటర్ చేయండి.", Toast.LENGTH_LONG).show();
+                          }
+                      }
+                  });
+                  lockLayout.addView(activateBtn);
+
+                  setContentView(lockLayout);
+              }
+
+              private void loadMainApplication() {
                   webView = new WebView(this);
                   setContentView(webView);
 
@@ -136,7 +230,6 @@ jobs:
 
                   webView.setWebChromeClient(new WebChromeClient());
 
-                  // క్రోమ్ బ్రౌజర్‌కు వెళ్లకుండా 100% యాప్ లోపలే ఫోర్స్ చేసే క్లయింట్
                   webView.setWebViewClient(new WebViewClient() {
                       @Override
                       public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -154,7 +247,11 @@ jobs:
                       }
                   });
 
-                  webView.loadUrl("${TARGET_URL}");
+                  if ("${SOURCE_TYPE}".equals("url")) {
+                      webView.loadUrl("${TARGET_URL}");
+                  } else {
+                      webView.loadUrl("file:///android_asset/public/index.html");
+                  }
               }
 
               @Override
@@ -167,7 +264,6 @@ jobs:
               }
           }
           EOF
-          fi
 
       - name: Configure App Icon & Fix AndroidManifest
         run: |
@@ -288,6 +384,7 @@ jobs:
           git pull origin main || true
 
           SLUG=$(node -p "require('./config.json').app_slug")
+          PKG=$(node -p "require('./config.json').package_name")
           VCODE=$(node -p "require('./config.json').version_code")
           RELEASE_TAG="release-${SLUG}-v${VCODE}"
           APK_URL="https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/${SLUG}-debug.apk"
@@ -303,6 +400,17 @@ jobs:
             const payload = require('./config.json');
             const appIndex = data.findIndex(a => a.package_name === payload.package_name);
             
+            // Deterministic Key Matching Web Dashboard
+            let hash = 0;
+            const str = '${PKG}' + 'secret_pass_2026';
+            for (let i = 0; i < str.length; i++) {
+              hash = ((hash << 5) - hash) + str.charCodeAt(i);
+              hash |= 0;
+            }
+            const licenseKey = 'KEY-' + Math.abs(hash).toString(16).toUpperCase().padStart(8, '0').substring(0, 8);
+
+            const existingApp = appIndex >= 0 ? data[appIndex] : {};
+
             const appDetails = {
               name: payload.app_name,
               package_name: payload.package_name,
@@ -311,6 +419,8 @@ jobs:
               source_type: payload.source_type,
               apk_url: '${APK_URL}',
               aab_url: '${AAB_URL}',
+              is_paid: existingApp.is_paid || false,
+              license_key: licenseKey,
               updated_at: new Date().toISOString()
             };
 
