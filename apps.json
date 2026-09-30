@@ -7,7 +7,19 @@
     "source_type": "url",
     "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-live-attendance-app-v9/live-attendance-app-debug.apk",
     "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-live-attendance-app-v9/live-attendance-app-release.aab",
-    "clients": [],
+    "clients": [
+      {
+        "id": "C2714",
+        "name": "Narasimha",
+        "email": "simha0015@gmail.com",
+        "phone": "",
+        "currency": "INR",
+        "fee": "500",
+        "is_paid": false,
+        "license_key": null,
+        "created_at": "30/09/2026"
+      }
+    ],
     "updated_at": "2026-09-30T08:20:46.304Z"
   },
   {
