@@ -15,9 +15,10 @@
         "phone": "",
         "currency": "INR",
         "fee": "500",
-        "is_paid": false,
-        "license_key": null,
-        "created_at": "30/09/2026"
+        "is_paid": true,
+        "license_key": "KEY-C2714-48E44597",
+        "created_at": "30/09/2026",
+        "verified_at": "30/09/2026, 14:01:41"
       }
     ],
     "updated_at": "2026-09-30T08:20:46.304Z"
