@@ -9,7 +9,8 @@
     "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-live-attendance-app-v8/live-attendance-app-release.aab",
     "updated_at": "2026-09-28T07:22:59.017Z",
     "license_key": "KEY-2C4A52B6",
-    "is_paid": true
+    "is_paid": false,
+    "verified_at": null
   },
   {
     "name": "Exhaust & RTU",
