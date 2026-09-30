@@ -86,7 +86,7 @@ jobs:
 
           npx cap add android
 
-      - name: Force Pure Native In-App Engine with Multi-Client License Lock
+      - name: Force Pure Native In-App Engine with Unbypassable License Lock
         run: |
           cd workspace
 
@@ -97,14 +97,16 @@ jobs:
           PKG_NAME=$(node -p "require('../config.json').package_name")
           APP_NAME=$(node -p "require('../config.json').app_name")
 
-          cat << EOF > "$TARGET_FILE"
+          cat << 'EOF' > "$TARGET_FILE"
           package ${PKG_NAME};
 
           import android.os.Bundle;
           import android.content.SharedPreferences;
           import android.graphics.Color;
+          import android.graphics.Typeface;
           import android.view.Gravity;
           import android.view.View;
+          import android.view.ViewGroup;
           import android.widget.Button;
           import android.widget.EditText;
           import android.widget.LinearLayout;
@@ -120,123 +122,140 @@ jobs:
 
           public class MainActivity extends AppCompatActivity {
               private WebView webView;
-              private LinearLayout lockLayout;
-              private static final String PREFS_NAME = "AppLicensePrefs";
-              private static final String KEY_ACTIVATED = "is_activated";
-              private static final String PKG_NAME = "${PKG_NAME}";
+              private static final String PREFS_NAME = "EnterpriseAppSecurityPrefs";
+              private static final String KEY_IS_UNLOCKED = "client_app_unlocked_status";
+              private static final String APP_PKG = "${PKG_NAME}";
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
 
                   SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-                  boolean isActivated = prefs.getBoolean(KEY_ACTIVATED, false);
+                  boolean isUnlocked = prefs.getBoolean(KEY_IS_UNLOCKED, false);
 
-                  if (isActivated) {
-                      loadMainApplication();
+                  if (isUnlocked) {
+                      launchClientApplication();
                   } else {
-                      showActivationScreen();
+                      enforceSecurityLockScreen();
                   }
               }
 
-              // మల్టీ-క్లయింట్ కీలను మ్యాథమెటికల్‌గా చెక్ చేసే డైనమిక్ వాలిడేటర్
-              private boolean validateClientLicenseKey(String enteredKey) {
-                  if (enteredKey == null || !enteredKey.startsWith("KEY-")) return false;
-                  String[] parts = enteredKey.split("-");
-                  if (parts.length != 3) return false;
+              private boolean verifyKeyChecksum(String key) {
+                  if (key == null) return false;
+                  String clean = key.trim().toUpperCase();
+                  if (!clean.startsWith("KEY-")) return false;
 
-                  String clientSlug = parts[1];
-                  String providedHex = parts[2];
+                  String[] segments = clean.split("-");
+                  if (segments.length != 3) return false;
+
+                  String clientSlug = segments[1];
+                  String providedHex = segments[2];
 
                   int hash = 0;
-                  String str = PKG_NAME + clientSlug + "secret_pass_2026";
-                  for (int i = 0; i < str.length(); i++) {
-                      hash = ((hash << 5) - hash) + str.charAt(i);
+                  String saltString = APP_PKG + clientSlug + "secret_pass_2026";
+                  for (int i = 0; i < saltString.length(); i++) {
+                      hash = ((hash << 5) - hash) + saltString.charAt(i);
                       hash |= 0;
                   }
                   String expectedHex = String.format("%08X", Math.abs(hash)).substring(0, 8);
                   return providedHex.equalsIgnoreCase(expectedHex);
               }
 
-              private void showActivationScreen() {
-                  lockLayout = new LinearLayout(this);
-                  lockLayout.setOrientation(LinearLayout.VERTICAL);
-                  lockLayout.setGravity(Gravity.CENTER);
-                  lockLayout.setPadding(60, 60, 60, 60);
-                  lockLayout.setBackgroundColor(Color.parseColor("#0b0f19"));
+              private void enforceSecurityLockScreen() {
+                  LinearLayout root = new LinearLayout(this);
+                  root.setOrientation(LinearLayout.VERTICAL);
+                  root.setGravity(Gravity.CENTER);
+                  root.setPadding(70, 70, 70, 70);
+                  root.setBackgroundColor(Color.parseColor("#0b0f19"));
+                  root.setLayoutParams(new ViewGroup.LayoutParams(
+                      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-                  TextView title = new TextView(this);
-                  title.setText("🔒 ${APP_NAME}");
-                  title.setTextSize(24);
-                  title.setTextColor(Color.parseColor("#38bdf8"));
-                  title.setGravity(Gravity.CENTER);
-                  lockLayout.addView(title);
+                  TextView icon = new TextView(this);
+                  icon.setText("🔒");
+                  icon.setTextSize(48);
+                  icon.setGravity(Gravity.CENTER);
+                  root.addView(icon);
 
-                  TextView subtitle = new TextView(this);
-                  subtitle.setText("ఈ యాప్ ఉపయోగించడానికి మీ క్లయింట్ లైసెన్స్ కీని నమోదు చేయండి.");
-                  subtitle.setTextSize(14);
-                  subtitle.setTextColor(Color.parseColor("#94a3b8"));
-                  subtitle.setGravity(Gravity.CENTER);
-                  subtitle.setPadding(0, 20, 0, 40);
-                  lockLayout.addView(subtitle);
+                  TextView appTitle = new TextView(this);
+                  appTitle.setText("${APP_NAME}");
+                  appTitle.setTextSize(22);
+                  appTitle.setTypeface(null, Typeface.BOLD);
+                  appTitle.setTextColor(Color.parseColor("#38bdf8"));
+                  appTitle.setGravity(Gravity.CENTER);
+                  appTitle.setPadding(0, 20, 0, 10);
+                  root.addView(appTitle);
 
-                  final EditText keyInput = new EditText(this);
-                  keyInput.setHint("Enter Client Activation Key");
-                  keyInput.setHintTextColor(Color.parseColor("#64748b"));
-                  keyInput.setTextColor(Color.WHITE);
-                  keyInput.setPadding(40, 35, 40, 35);
-                  keyInput.setBackgroundColor(Color.parseColor("#151d30"));
-                  lockLayout.addView(keyInput);
+                  TextView msg = new TextView(this);
+                  msg.setText("Application is Locked.\nPlease enter your client activation license key to continue.");
+                  msg.setTextSize(13);
+                  msg.setTextColor(Color.parseColor("#94a3b8"));
+                  msg.setGravity(Gravity.CENTER);
+                  msg.setPadding(0, 0, 0, 40);
+                  root.addView(msg);
 
-                  Button activateBtn = new Button(this);
-                  activateBtn.setText("⚡ Activate App");
-                  activateBtn.setTextColor(Color.WHITE);
-                  activateBtn.setBackgroundColor(Color.parseColor("#2563eb"));
+                  final EditText inputKey = new EditText(this);
+                  inputKey.setHint("Enter License Key (e.g. KEY-C1001-XXXX)");
+                  inputKey.setHintTextColor(Color.parseColor("#64748b"));
+                  inputKey.setTextColor(Color.WHITE);
+                  inputKey.setTextSize(14);
+                  inputKey.setPadding(40, 35, 40, 35);
+                  inputKey.setBackgroundColor(Color.parseColor("#151d30"));
+                  inputKey.setGravity(Gravity.CENTER);
+                  LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
+                      LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                  inputKey.setLayoutParams(inputParams);
+                  root.addView(inputKey);
+
+                  Button btnActivate = new Button(this);
+                  btnActivate.setText("⚡ Activate App");
+                  btnActivate.setTextColor(Color.WHITE);
+                  btnActivate.setTextSize(15);
+                  btnActivate.setTypeface(null, Typeface.BOLD);
+                  btnActivate.setBackgroundColor(Color.parseColor("#2563eb"));
                   LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
-                      LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-                  );
-                  btnParams.setMargins(0, 30, 0, 0);
-                  activateBtn.setLayoutParams(btnParams);
+                      LinearLayout.LayoutParams.MATCH_PARENT, 130);
+                  btnParams.setMargins(0, 35, 0, 0);
+                  btnActivate.setLayoutParams(btnParams);
 
-                  activateBtn.setOnClickListener(new View.OnClickListener() {
+                  btnActivate.setOnClickListener(new View.OnClickListener() {
                       @Override
                       public void onClick(View v) {
-                          String enteredKey = keyInput.getText().toString().trim().toUpperCase();
-
-                          if (validateClientLicenseKey(enteredKey)) {
+                          String entered = inputKey.getText().toString().trim().toUpperCase();
+                          if (verifyKeyChecksum(entered)) {
                               getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                                   .edit()
-                                  .putBoolean(KEY_ACTIVATED, true)
+                                  .putBoolean(KEY_IS_UNLOCKED, true)
                                   .apply();
-                              Toast.makeText(MainActivity.this, "✅ లైసెన్స్ యాక్టివేట్ అయింది!", Toast.LENGTH_SHORT).show();
-                              loadMainApplication();
+                              Toast.makeText(MainActivity.this, "✅ Activation Successful!", Toast.LENGTH_SHORT).show();
+                              launchClientApplication();
                           } else {
-                              Toast.makeText(MainActivity.this, "❌ చెల్లని కీ! దయచేసి మీ అడ్మిన్ ఇచ్చిన సరైన కీ ఎంటర్ చేయండి.", Toast.LENGTH_LONG).show();
+                              Toast.makeText(MainActivity.this, "❌ Invalid License Key! Please enter the key provided by developer.", Toast.LENGTH_LONG).show();
                           }
                       }
                   });
-                  lockLayout.addView(activateBtn);
+                  root.addView(btnActivate);
 
-                  setContentView(lockLayout);
+                  setContentView(root);
               }
 
-              private void loadMainApplication() {
+              private void launchClientApplication() {
                   webView = new WebView(this);
+                  webView.setLayoutParams(new ViewGroup.LayoutParams(
+                      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
                   setContentView(webView);
 
-                  WebSettings settings = webView.getSettings();
-                  settings.setJavaScriptEnabled(true);
-                  settings.setDomStorageEnabled(true);
-                  settings.setDatabaseEnabled(true);
-                  settings.setAllowFileAccess(true);
-                  settings.setLoadsImagesAutomatically(true);
-                  settings.setUseWideViewPort(true);
-                  settings.setLoadWithOverviewMode(true);
-                  settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-                  settings.setUserAgentString(settings.getUserAgentString() + " EnterpriseNativeApp/1.0");
+                  WebSettings s = webView.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setDatabaseEnabled(true);
+                  s.setAllowFileAccess(true);
+                  s.setLoadsImagesAutomatically(true);
+                  s.setUseWideViewPort(true);
+                  s.setLoadWithOverviewMode(true);
+                  s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                  s.setUserAgentString(s.getUserAgentString() + " EnterpriseSecureApp/1.0");
 
                   webView.setWebChromeClient(new WebChromeClient());
-
                   webView.setWebViewClient(new WebViewClient() {
                       @Override
                       public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -272,14 +291,18 @@ jobs:
           }
           EOF
 
+          # Sed/Replace variables dynamically into MainActivity.java
+          sed -i "s/\${PKG_NAME}/$PKG_NAME/g" "$TARGET_FILE"
+          sed -i "s/\${APP_NAME}/$APP_NAME/g" "$TARGET_FILE"
+          sed -i "s/\${SOURCE_TYPE}/$SOURCE_TYPE/g" "$TARGET_FILE"
+          sed -i "s|\${TARGET_URL}|$TARGET_URL|g" "$TARGET_FILE"
+
       - name: Configure App Icon & Fix AndroidManifest
         run: |
           cd workspace
 
           HAS_ICON=$(node -p "require('../config.json').has_custom_icon")
           if [ "$HAS_ICON" = "true" ] && [ -f "../build_cache/icon.png" ]; then
-            echo "Applying custom user icon safely..."
-
             rm -rf android/app/src/main/res/mipmap-anydpi-v26
             rm -f android/app/src/main/res/drawable/ic_launcher_background.xml
             rm -f android/app/src/main/res/drawable/ic_launcher_foreground.xml
