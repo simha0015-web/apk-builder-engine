@@ -177,19 +177,20 @@
     .btn-copy { background: #38bdf8 !important; color: #000 !important; }
     .btn-edit { background: #475569 !important; color: white !important; }
     .btn-qr { background: #8b5cf6 !important; color: white !important; }
-    .btn-add-client { background: #8b5cf6 !important; color: white !important; padding: 7px 14px; font-weight: bold; }
+    .btn-add-client { background: #8b5cf6 !important; color: white !important; padding: 8px 16px; font-weight: bold; }
     .btn-del { background: #ef4444 !important; color: white !important; }
 
     .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
     .badge-paid { background: #10b981; color: #000; }
     .badge-unpaid { background: #ef4444; color: #fff; }
 
+    /* Modal Overlay - Full Click Support */
     .modal-overlay {
       display: none;
       position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
+      top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0,0,0,0.85);
-      z-index: 99999;
+      z-index: 999999;
       justify-content: center;
       align-items: center;
       padding: 15px;
@@ -203,7 +204,8 @@
       width: 100%;
       padding: 22px;
       box-sizing: border-box;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      position: relative;
     }
 
     #statusBox { 
@@ -227,7 +229,7 @@
   </div>
 
   <div class="card">
-    <h2>🔑 అడ్మిన్ యాక్సెస్</h2>
+    <h2>🔑 అడ్మిన్ సెటప్</h2>
     <label>GitHub Personal Access Token (PAT):</label>
     <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxx">
     <small style="color:var(--text-muted); font-size:11px;">ఇది మీ బ్రౌజర్‌లో మాత్రమే సేవ్ అవుతుంది. పేమెంట్ సిస్టమ్ సురక్షితంగా కాన్ఫిగర్ చేయబడింది.</small>
@@ -320,8 +322,8 @@
     <label>డీల్ కుదుర్చుకున్న ఫీజు (Fee ₹):</label>
     <input type="number" id="newClientFee" placeholder="₹ 5000">
     <div style="display:flex; gap:10px; margin-top:18px;">
-      <button onclick="saveNewClient()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">➕ జోడించండి</button>
-      <button onclick="closeModal('addClientModal')" style="background:#475569; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">రద్దు</button>
+      <button type="button" onclick="saveNewClient()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">➕ జోడించండి</button>
+      <button type="button" onclick="closeModal('addClientModal')" style="background:#475569; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">రద్దు</button>
     </div>
   </div>
 </div>
@@ -346,8 +348,8 @@
     <input type="number" id="editClientFee">
 
     <div style="display:flex; gap:10px; margin-top:18px;">
-      <button onclick="saveClientEdit()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">💾 సేవ్ చేయండి</button>
-      <button onclick="closeModal('editClientModal')" style="background:#475569; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">రద్దు</button>
+      <button type="button" onclick="saveClientEdit()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">💾 సేవ్ చేయండి</button>
+      <button type="button" onclick="closeModal('editClientModal')" style="background:#475569; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">రద్దు</button>
     </div>
   </div>
 </div>
@@ -363,8 +365,8 @@
     <div id="qrAmountText" style="font-size:18px; font-weight:bold; color:#10b981; margin-top:12px;"></div>
     <p style="font-size:12px; color:var(--text-muted); margin-top:6px;">పేమెంట్ పూర్తయిన తర్వాత డ్యాష్‌బోర్డ్‌లో <b>Verify</b> నొక్కగానే కీ జెనరేట్ అయి క్లయింట్ మెయిల్‌కు వెళ్తుంది.</p>
     <div style="display:flex; gap:10px; margin-top:15px;">
-      <button onclick="copyUpiLink()" style="background:#38bdf8; color:#000; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">🔗 UPI Link కాపీ</button>
-      <button onclick="closeModal('qrModal')" style="background:#475569; color:#fff; border:none; padding:10px; border-radius:6px; cursor:pointer;">క్లోజ్</button>
+      <button type="button" onclick="copyUpiLink()" style="background:#38bdf8; color:#000; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">🔗 UPI Link కాపీ</button>
+      <button type="button" onclick="closeModal('qrModal')" style="background:#475569; color:#fff; border:none; padding:10px; border-radius:6px; cursor:pointer;">క్లోజ్</button>
     </div>
   </div>
 </div>
@@ -472,21 +474,22 @@
     if (!res.ok) throw new Error("GitHub లో డేటా సేవ్ కాలేదు. PAT Token సరైనదేనా చెక్ చేసుకోండి.");
   }
 
-  // Add Client Modal ఓపెన్ చేసే ఫంక్షన్
-  function openAddClientModal(pkg) {
+  // 100% బగ్-ఫ్రీ Modal ఓపెన్ లాజిక్
+  window.openAddClientModal = function(pkg) {
+    const modal = document.getElementById('addClientModal');
     document.getElementById('modalTargetPkg').value = pkg;
     document.getElementById('newClientName').value = '';
     document.getElementById('newClientEmail').value = '';
     document.getElementById('newClientPhone').value = '';
     document.getElementById('newClientFee').value = '';
-    document.getElementById('addClientModal').style.display = 'flex';
-  }
+    modal.style.display = 'flex';
+  };
 
-  async function saveNewClient() {
+  window.saveNewClient = async function() {
     const token = document.getElementById('ghToken').value.trim();
     const repo = detectRepo();
     if (!token || !repo) {
-      alert("GitHub Token నమోదు చేయండి!");
+      alert("దయచేసి పేజీ పైభాగంలో GitHub PAT Token నమోదు చేయండి!");
       return;
     }
 
@@ -506,7 +509,7 @@
       alert("యాప్ సమాచారం లభించలేదు!");
       return;
     }
-    if (!app.clients) app.clients = [];
+    if (!app.clients || !Array.isArray(app.clients)) app.clients = [];
 
     const clientSlug = "C" + Math.floor(1000 + Math.random() * 9000);
 
@@ -529,9 +532,9 @@
     } catch(e) {
       alert("లోపం: " + e.message);
     }
-  }
+  };
 
-  function openEditClientModal(pkg, clientId) {
+  window.openEditClientModal = function(pkg, clientId) {
     const app = cachedApps.find(a => a.package_name === pkg);
     if (!app || !app.clients) return;
     const client = app.clients.find(c => c.id === clientId);
@@ -545,9 +548,9 @@
     document.getElementById('editClientFee').value = client.fee || '';
 
     document.getElementById('editClientModal').style.display = 'flex';
-  }
+  };
 
-  async function saveClientEdit() {
+  window.saveClientEdit = async function() {
     const token = document.getElementById('ghToken').value.trim();
     const repo = detectRepo();
     if (!token || !repo) {
@@ -576,7 +579,7 @@
     } catch(e) {
       alert("సేవ్ కాలేదు: " + e.message);
     }
-  }
+  };
 
   function sendPaymentQrOnWhatsApp(phone, clientName, appName, fee) {
     let p = (phone || "").replace(/[^0-9]/g, '');
@@ -730,9 +733,9 @@ ${key}
     }
   }
 
-  function closeModal(id) {
+  window.closeModal = function(id) {
     document.getElementById(id).style.display = 'none';
-  }
+  };
 
   function renderAppCards() {
     const list = document.getElementById('appsList');
@@ -744,7 +747,22 @@ ${key}
     }
 
     cachedApps.slice().reverse().forEach(app => {
-      if (!app.clients || !Array.isArray(app.clients)) app.clients = [];
+      // పాత సింగిల్ డేటాను సురక్షితంగా మల్టీ-క్లయింట్స్ లోకి మార్చడం
+      if (!app.clients || !Array.isArray(app.clients)) {
+        app.clients = [];
+        if (app.client_name || app.license_key) {
+          app.clients.push({
+            id: "C1001",
+            name: app.client_name || "Client 1",
+            email: app.client_email || "",
+            phone: app.client_phone || "",
+            fee: app.client_fee || "",
+            is_paid: app.is_paid || false,
+            license_key: app.license_key || generateClientKey(app.package_name, "C1001"),
+            created_at: new Date().toLocaleDateString()
+          });
+        }
+      }
 
       let clientsHtml = '';
       if (app.clients.length === 0) {
@@ -764,19 +782,19 @@ ${key}
                 </div>
                 
                 <div class="btn-group">
-                  <button class="btn-edit" onclick="openEditClientModal('${app.package_name}', '${c.id}')">✏️ Edit</button>
+                  <button type="button" class="btn-edit" onclick="openEditClientModal('${app.package_name}', '${c.id}')">✏️ Edit</button>
 
                   ${!isPaid ? `
-                    <button class="btn-qr" onclick="openQrModal('${app.name}', '${c.name}', '${c.fee}')">📲 QR చూడు</button>
-                    <button class="btn-whatsapp" onclick="sendPaymentQrOnWhatsApp('${c.phone}', '${c.name}', '${app.name}', '${c.fee}')">📲 Send QR WA</button>
-                    <button class="btn-mail" onclick="sendPaymentQrOnEmail('${c.email}', '${c.name}', '${app.name}', '${c.fee}')">📧 Send Invoice Mail</button>
-                    <button class="btn-verify" onclick="verifyPaymentAndGenerateKey('${app.package_name}', '${c.id}')">💰 Verify & Release Key</button>
+                    <button type="button" class="btn-qr" onclick="openQrModal('${app.name}', '${c.name}', '${c.fee}')">📲 QR చూడు</button>
+                    <button type="button" class="btn-whatsapp" onclick="sendPaymentQrOnWhatsApp('${c.phone}', '${c.name}', '${app.name}', '${c.fee}')">📲 Send QR WA</button>
+                    <button type="button" class="btn-mail" onclick="sendPaymentQrOnEmail('${c.email}', '${c.name}', '${app.name}', '${c.fee}')">📧 Send Invoice Mail</button>
+                    <button type="button" class="btn-verify" onclick="verifyPaymentAndGenerateKey('${app.package_name}', '${c.id}')">💰 Verify & Release Key</button>
                   ` : `
-                    <button class="btn-copy" onclick="copyKey('${c.license_key}')">📋 Copy Key</button>
-                    <button class="btn-mail" onclick="sendKeyEmail('${c.email}', '${c.name}', '${app.name}', '${app.apk_url}', '${c.license_key}')">📧 Resend Key Mail</button>
-                    <button class="btn-whatsapp" onclick="sendKeyWhatsApp('${c.phone}', '${c.name}', '${app.name}', '${app.apk_url}', '${c.license_key}')">📲 Resend Key WA</button>
+                    <button type="button" class="btn-copy" onclick="copyKey('${c.license_key}')">📋 Copy Key</button>
+                    <button type="button" class="btn-mail" onclick="sendKeyEmail('${c.email}', '${c.name}', '${app.name}', '${app.apk_url}', '${c.license_key}')">📧 Resend Key Mail</button>
+                    <button type="button" class="btn-whatsapp" onclick="sendKeyWhatsApp('${c.phone}', '${c.name}', '${app.name}', '${app.apk_url}', '${c.license_key}')">📲 Resend Key WA</button>
                   `}
-                  <button class="btn-del" onclick="deleteClient('${app.package_name}', '${c.id}')">🗑️</button>
+                  <button type="button" class="btn-del" onclick="deleteClient('${app.package_name}', '${c.id}')">🗑️</button>
                 </div>
               </div>
 
@@ -815,7 +833,7 @@ ${key}
               <small style="color:var(--text-muted); font-family:monospace;">${app.package_name}</small>
             </div>
             <div class="btn-group">
-              <button class="btn-add-client" onclick="openAddClientModal('${app.package_name}')">➕ Add Client</button>
+              <button type="button" class="btn-add-client" onclick="openAddClientModal('${app.package_name}')">➕ Add Client</button>
               <a href="${app.apk_url}" target="_blank">📥 APK</a>
               <a href="${app.aab_url}" target="_blank" class="aab">📦 AAB</a>
             </div>
