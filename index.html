@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pro Android App Studio & Client Manager</title>
+  <title>Pro Android App Studio & Multi-Client SaaS Manager</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -25,7 +25,7 @@
       padding: 20px; 
       line-height: 1.5; 
     }
-    .container { max-width: 950px; margin: auto; }
+    .container { max-width: 1000px; margin: auto; }
     .header { text-align: center; margin-bottom: 25px; }
     .header h1 { margin: 0; color: var(--accent); font-size: 26px; }
     .header p { color: var(--text-muted); margin: 5px 0 0; font-size: 14px; }
@@ -48,10 +48,7 @@
       gap: 8px; 
     }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
-    @media (max-width: 768px) { 
-      .grid, .grid-4 { grid-template-columns: 1fr; } 
-    }
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
     label { display: block; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
     input, select, textarea { 
       width: 100%; 
@@ -65,24 +62,7 @@
       font-size: 14px; 
     }
     input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
-    .permissions-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
-      gap: 10px; 
-      margin-top: 10px; 
-    }
-    .perm-item { 
-      background: #0b1120; 
-      padding: 10px; 
-      border-radius: 8px; 
-      border: 1px solid var(--border); 
-      display: flex; 
-      align-items: center; 
-      gap: 8px; 
-      cursor: pointer; 
-      font-size: 13px; 
-    }
-    .perm-item input { width: auto; margin: 0; }
+    
     .file-drop { 
       border: 2px dashed var(--border); 
       padding: 15px; 
@@ -108,8 +88,8 @@
       margin-top: 20px; 
     }
 
-    /* Client Ledger Card */
-    .client-card { 
+    /* App & Multi-Client Card */
+    .app-card { 
       background: #0d1527; 
       border: 1px solid var(--border); 
       border-radius: 12px; 
@@ -119,54 +99,62 @@
       flex-direction: column; 
       gap: 14px; 
     }
-    .client-header {
+    .app-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       flex-wrap: wrap;
       gap: 10px;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 12px;
     }
-    .client-info-table {
-      width: 100%;
+    .client-list-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .client-item-card {
       background: #080d1a;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      padding: 14px;
-      font-size: 13px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
-    }
-    .info-label { color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: bold; }
-    .info-value { color: #fff; font-weight: 600; margin-top: 3px; word-break: break-all; }
-
-    .key-display-box {
-      background: #060913;
       border: 1px solid #1e293b;
-      padding: 12px 16px;
       border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .client-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 10px;
     }
-    .key-code {
+    .client-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      font-size: 12px;
+      width: 100%;
+    }
+    .info-label { color: var(--text-muted); font-size: 10px; text-transform: uppercase; font-weight: bold; }
+    .info-value { color: #fff; font-weight: 600; margin-top: 2px; word-break: break-all; }
+
+    .key-badge {
       font-family: monospace;
-      font-size: 16px;
+      font-size: 13px;
       font-weight: bold;
       color: #38bdf8;
-      background: #0f172a;
-      padding: 6px 12px;
-      border-radius: 6px;
+      background: #0b1120;
+      padding: 4px 8px;
+      border-radius: 4px;
       border: 1px solid #38bdf844;
-      letter-spacing: 1px;
     }
 
-    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
     .btn-group a, .btn-group button { 
       text-decoration: none; 
-      padding: 8px 12px; 
+      padding: 6px 10px; 
       background: #16a34a; 
       color: white; 
       border-radius: 6px; 
@@ -174,7 +162,7 @@
       font-weight: bold; 
       display: inline-flex; 
       align-items: center; 
-      gap: 5px; 
+      gap: 4px; 
       border: none; 
       cursor: pointer; 
     }
@@ -183,10 +171,10 @@
     .btn-mail { background: #ea4335 !important; color: white !important; }
     .btn-verify { background: #0284c7 !important; color: white !important; }
     .btn-copy { background: #38bdf8 !important; color: #000 !important; }
-    .btn-edit { background: #475569 !important; color: white !important; }
-    .btn-qr { background: #8b5cf6 !important; color: white !important; }
+    .btn-add-client { background: #8b5cf6 !important; color: white !important; padding: 7px 12px; font-weight: bold; }
+    .btn-del { background: #ef4444 !important; color: white !important; }
 
-    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
     .badge-paid { background: #10b981; color: #000; }
     .badge-unpaid { background: #ef4444; color: #fff; }
 
@@ -228,12 +216,12 @@
 
 <div class="container">
   <div class="header">
-    <h1>🚀 Android Cloud App Studio & Client Manager</h1>
-    <p>యాప్స్ నిర్మాణం, క్లయింట్ లెడ్జర్ & UPI రియల్ పేమెంట్ సిస్టమ్</p>
+    <h1>🚀 Android Cloud App Studio & Multi-Client CRM</h1>
+    <p>ఒకే యాప్‌ను ఎంత మంది క్లయింట్‌లకైనా వేర్వేరు లైసెన్స్ కీలతో విక్రయించండి</p>
   </div>
 
   <div class="card">
-    <h2>🔑 యాక్సెస్ & పేమెంట్ సెటప్</h2>
+    <h2>🔑 అడ్మిన్ & పేమెంట్ సెటప్</h2>
     <div class="grid">
       <div>
         <label>GitHub Personal Access Token (PAT):</label>
@@ -242,61 +230,25 @@
       <div>
         <label>మీ UPI ID (GPay / PhonePe / Paytm):</label>
         <input type="text" id="myUpiId" placeholder="yourname@okhdfcbank / 9876543210@ybl">
-        <small style="color:var(--text-muted); font-size:11px;">క్లయింట్ పేమెంట్ కోసం ఆటోమేటిక్ QR కోడ్ దీని ఆధారంగా తయారవుతుంది.</small>
-      </div>
-    </div>
-  </div>
-
-  <!-- Client Details Section with Auto-Fill -->
-  <div class="card">
-    <h2>👤 క్లయింట్ వివరాలు (Client Billing Details)</h2>
-    <div class="grid-4">
-      <div>
-        <label>క్లయింట్ పేరు:</label>
-        <input type="text" id="clientName" placeholder="ఉదా: రమేష్ నాయుడు">
-      </div>
-      <div>
-        <label>క్లయింట్ ఈమెయిల్:</label>
-        <input type="email" id="clientEmail" placeholder="client@example.com">
-      </div>
-      <div>
-        <label>వాట్సాప్ / ఫోన్:</label>
-        <input type="text" id="clientPhone" placeholder="+91 9876543210">
-      </div>
-      <div>
-        <label>ఫిక్స్ చేసిన ధర (Fee ₹):</label>
-        <input type="number" id="clientFee" placeholder="₹ 3000">
+        <small style="color:var(--text-muted); font-size:11px;">క్లయింట్లందరికీ దీనితోనే లైవ్ పేమెంట్ QR తయారవుతుంది.</small>
       </div>
     </div>
   </div>
 
   <div class="card" id="appFormCard">
-    <h2>📱 ప్రాథమిక యాప్ సమాచారం</h2>
+    <h2>📱 యాప్ క్రియేషన్ (New App Source)</h2>
     <div class="grid">
       <div>
         <label>App Name:</label>
-        <input type="text" id="appName" placeholder="My Enterprise App">
+        <input type="text" id="appName" placeholder="Multi-Store Grocery App">
       </div>
       <div>
         <label>Package Name (Application ID):</label>
-        <input type="text" id="pkgName" placeholder="com.clientname.app">
+        <input type="text" id="pkgName" placeholder="com.company.multiapp">
       </div>
     </div>
-    <div class="grid">
-      <div>
-        <label>Version Name:</label>
-        <input type="text" id="vName" value="1.0.0">
-      </div>
-      <div>
-        <label>Version Code:</label>
-        <input type="number" id="vCode" value="1">
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>📦 సోర్స్ టైప్ & ఫైల్స్ (Source Input)</h2>
-    <label>సెలెక్ట్ చేయండి:</label>
+    
+    <label style="margin-top:15px;">సోర్స్ టైప్:</label>
     <select id="sourceType" onchange="toggleSource()">
       <option value="url">Website URL (Web App / PWA)</option>
       <option value="zip">Local ZIP File Upload (HTML, CSS, JS Project)</option>
@@ -309,9 +261,9 @@
     </div>
 
     <div id="zipBox" style="display:none; margin-top:10px;">
-      <label>ప్రాజెక్ట్ ZIP ఫైల్ అప్‌లోడ్ చేయండి:</label>
+      <label>ప్రాజెక్ట్ ZIP ఫైల్:</label>
       <div class="file-drop" onclick="document.getElementById('zipInput').click()">
-        📁 ZIP ఫైల్ ఎంచుకోవడానికి ఇక్కడ ట్యాప్ చేయండి
+        📁 ZIP ఫైల్ ఎంచుకోండి
         <input type="file" id="zipInput" accept=".zip" onchange="handleZipUpload(this)">
       </div>
       <div id="zipStatus" class="file-status"></div>
@@ -319,30 +271,19 @@
 
     <div id="htmlBox" style="display:none; margin-top:10px;">
       <label>HTML / CSS / JS కోడ్:</label>
-      <textarea id="rawHtml" rows="6" placeholder="<!DOCTYPE html><html>...</html>"></textarea>
+      <textarea id="rawHtml" rows="5" placeholder="<!DOCTYPE html><html>...</html>"></textarea>
     </div>
 
     <div style="margin-top:15px;">
-      <label>యాప్ ఐకాన్ (ఏ సైజ్ ఫొటో అయినా సరే):</label>
+      <label>యాప్ ఐకాన్:</label>
       <div class="file-drop" onclick="document.getElementById('iconInput').click()">
-        🖼️ ఐకాన్ ఎంచుకోవడానికి ఇక్కడ ట్యాప్ చేయండి (PNG, JPG)
+        🖼️ ఐకాన్ ఎంచుకోండి (PNG, JPG)
         <input type="file" id="iconInput" accept="image/*" onchange="handleUniversalIconUpload(this)">
       </div>
       <div id="iconStatus" class="file-status"></div>
     </div>
-  </div>
 
-  <div class="card">
-    <h2>🔒 ఆండ్రాయిడ్ పర్మిషన్లు</h2>
-    <div class="permissions-grid">
-      <label class="perm-item"><input type="checkbox" id="permInternet" checked> Internet Access</label>
-      <label class="perm-item"><input type="checkbox" id="permCamera"> Camera</label>
-      <label class="perm-item"><input type="checkbox" id="permFineLocation"> Location</label>
-      <label class="perm-item"><input type="checkbox" id="permStorage"> Storage</label>
-      <label class="perm-item"><input type="checkbox" id="permNotifications" checked> Push Notifications</label>
-    </div>
-
-    <button class="build-btn" onclick="triggerBuild()">⚡ Build Release APK & AAB Now</button>
+    <button class="build-btn" onclick="triggerBuild()">⚡ Build Master App (APK & AAB)</button>
 
     <div id="statusBox">
       <div style="display:flex; justify-content:space-between; font-weight:bold;">
@@ -352,54 +293,51 @@
       <div class="progress-bar-container">
         <div id="progressBar" class="progress-bar"></div>
       </div>
-      <div id="statusDetail" style="font-size: 13px; color: var(--text-muted);">
-        GitHub Actions సర్వర్ కనెక్ట్ అవుతోంది...
-      </div>
+      <div id="statusDetail" style="font-size: 13px; color: var(--text-muted);">క్లౌడ్ సర్వర్ రన్ అవుతోంది...</div>
       <div id="actionLink" style="margin-top: 10px; font-size: 12px;"></div>
     </div>
   </div>
 
-  <!-- Client Ledger and License History -->
+  <!-- Multi-Client Ledger -->
   <div class="card">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;">
-      <h2 style="border:none; margin:0; padding:0;">📋 క్లయింట్ లెడ్జర్, ఎడిట్ & రియల్ UPI పేమెంట్స్</h2>
-      <button onclick="loadApps()" style="background:#263352; border:none; padding:8px 14px; border-radius:6px; color:#fff; cursor:pointer; font-weight:bold;">🔄 Refresh List</button>
+      <h2 style="border:none; margin:0; padding:0;">👥 యాప్స్ & క్లయింట్ల మల్టీ-లైసెన్స్ లెడ్జర్</h2>
+      <button onclick="loadApps()" style="background:#263352; border:none; padding:8px 14px; border-radius:6px; color:#fff; cursor:pointer; font-weight:bold;">🔄 Refresh</button>
     </div>
     <div id="appsList" style="margin-top:10px;">డేటా లోడ్ అవుతోంది...</div>
   </div>
 </div>
 
-<!-- 1. Edit Client Details Modal -->
-<div id="editModal" class="modal-overlay">
+<!-- Modal 1: Add New Client To Any App -->
+<div id="addClientModal" class="modal-overlay">
   <div class="modal-content">
-    <h3 style="margin-top:0; color:var(--accent);">✏️ క్లయింట్ వివరాలు సవరించండి</h3>
-    <input type="hidden" id="editPkgName">
-    <label>క్లయింట్ పేరు:</label>
-    <input type="text" id="editClientName">
+    <h3 style="margin-top:0; color:var(--accent);">➕ కొత్త క్లయింట్‌ను జోడించండి</h3>
+    <input type="hidden" id="modalTargetPkg">
+    <label>క్లయింట్ / బిజినెస్ పేరు:</label>
+    <input type="text" id="newClientName" placeholder="ఉదా: శ్రీనివాస్ మెడికల్స్">
     <label>క్లయింట్ ఈమెయిల్:</label>
-    <input type="email" id="editClientEmail">
-    <label>వాట్సాప్ / ఫోన్:</label>
-    <input type="text" id="editClientPhone">
-    <label>ఫిక్స్ చేసిన ధర (Fee ₹):</label>
-    <input type="number" id="editClientFee">
+    <input type="email" id="newClientEmail" placeholder="srinivas@gmail.com">
+    <label>వాట్సాప్ / ఫోన్ నంబర్:</label>
+    <input type="text" id="newClientPhone" placeholder="+91 9876543210">
+    <label>డీల్ కుదుర్చుకున్న ఫీజు (Fee ₹):</label>
+    <input type="number" id="newClientFee" placeholder="₹ 4000">
     <div style="display:flex; gap:10px; margin-top:18px;">
-      <button onclick="saveClientEdit()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">💾 సేవ్ చేయండి</button>
-      <button onclick="closeModal('editModal')" style="background:#475569; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">రద్దు</button>
+      <button onclick="saveNewClient()" style="background:#10b981; color:#000; border:none; padding:10px 16px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">➕ Add Client & Generate Key</button>
+      <button onclick="closeModal('addClientModal')" style="background:#475569; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer;">రద్దు</button>
     </div>
   </div>
 </div>
 
-<!-- 2. Real UPI QR Code Modal -->
+<!-- Modal 2: Dynamic UPI QR Code -->
 <div id="qrModal" class="modal-overlay">
   <div class="modal-content" style="text-align:center;">
-    <h3 style="margin-top:0; color:var(--accent);">📲 రియల్ UPI పేమెంట్ QR కోడ్</h3>
-    <p id="qrAppInfo" style="font-size:13px; color:var(--text-muted); margin-bottom:15px;"></p>
+    <h3 style="margin-top:0; color:var(--accent);">📲 లైవ్ UPI పేమెంట్ QR కోడ్</h3>
+    <p id="qrClientText" style="font-size:13px; color:var(--text-muted); margin-bottom:12px;"></p>
     <div style="background:#fff; padding:15px; border-radius:12px; display:inline-block;">
       <img id="qrImage" src="" alt="UPI QR Code" style="width:200px; height:200px; display:block;">
     </div>
     <div id="qrAmountText" style="font-size:18px; font-weight:bold; color:#10b981; margin-top:12px;"></div>
-    <p style="font-size:11px; color:var(--text-muted); margin:8px 0 15px;">Google Pay, PhonePe, Paytm లేదా ఏ UPI యాప్ ద్వారానైనా స్కాన్ చేయవచ్చు.</p>
-    <div style="display:flex; gap:10px;">
+    <div style="display:flex; gap:10px; margin-top:15px;">
       <button onclick="copyUpiLink()" style="background:#38bdf8; color:#000; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; flex:1;">🔗 UPI Link కాపీ</button>
       <button onclick="closeModal('qrModal')" style="background:#475569; color:#fff; border:none; padding:10px; border-radius:6px; cursor:pointer;">క్లోజ్</button>
     </div>
@@ -474,14 +412,16 @@
     }));
   }
 
-  function calculateKey(pkg) {
+  // ప్రతి క్లయింట్‌కు మ్యాథమెటికల్ చెక్‌‌సమ్ లైసెన్స్ కీ సృష్టి
+  function generateClientKey(pkg, clientSlug) {
     let hash = 0;
-    const str = pkg + "secret_pass_2026";
+    const str = pkg + clientSlug + "secret_pass_2026";
     for (let i = 0; i < str.length; i++) {
       hash = ((hash << 5) - hash) + str.charCodeAt(i);
       hash |= 0;
     }
-    return "KEY-" + Math.abs(hash).toString(16).toUpperCase().padStart(8, '0').substring(0, 8);
+    const hex = Math.abs(hash).toString(16).toUpperCase().padStart(8, '0').substring(0, 8);
+    return `KEY-${clientSlug.toUpperCase()}-${hex}`;
   }
 
   async function uploadFileToGitHub(repo, token, path, contentBase64) {
@@ -496,7 +436,7 @@
       }
     } catch(e){}
 
-    const body = { message: `Update Ledger: ${path}`, content: contentBase64 };
+    const body = { message: `Update Multi-Client Ledger: ${path}`, content: contentBase64 };
     if (sha) body.sha = sha;
 
     const res = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
@@ -507,19 +447,16 @@
     if (!res.ok) throw new Error("GitHub డేటా అప్‌డేట్ విఫలమైంది.");
   }
 
-  // 1. క్లయింట్ వివరాలు మాన్యువల్‌గా ఎడిట్ చేసుకునే మోడల్
-  function openEditModal(pkgName) {
-    const app = cachedApps.find(a => a.package_name === pkgName);
-    if (!app) return;
-    document.getElementById('editPkgName').value = app.package_name;
-    document.getElementById('editClientName').value = app.client_name || '';
-    document.getElementById('editClientEmail').value = app.client_email || '';
-    document.getElementById('editClientPhone').value = app.client_phone || '';
-    document.getElementById('editClientFee').value = app.client_fee || '';
-    document.getElementById('editModal').style.display = 'flex';
+  function openAddClientModal(pkg) {
+    document.getElementById('modalTargetPkg').value = pkg;
+    document.getElementById('newClientName').value = '';
+    document.getElementById('newClientEmail').value = '';
+    document.getElementById('newClientPhone').value = '';
+    document.getElementById('newClientFee').value = '';
+    document.getElementById('addClientModal').style.display = 'flex';
   }
 
-  async function saveClientEdit() {
+  async function saveNewClient() {
     const token = document.getElementById('ghToken').value.trim();
     const repo = detectRepo();
     if (!token || !repo) {
@@ -527,50 +464,107 @@
       return;
     }
 
-    const pkg = document.getElementById('editPkgName').value;
+    const pkg = document.getElementById('modalTargetPkg').value;
+    const name = document.getElementById('newClientName').value.trim();
+    const email = document.getElementById('newClientEmail').value.trim();
+    const phone = document.getElementById('newClientPhone').value.trim();
+    const fee = document.getElementById('newClientFee').value.trim();
+
+    if (!name) {
+      alert("దయచేసి క్లయింట్ పేరు నమోదు చేయండి!");
+      return;
+    }
+
     const app = cachedApps.find(a => a.package_name === pkg);
     if (!app) return;
 
-    app.client_name = document.getElementById('editClientName').value.trim();
-    app.client_email = document.getElementById('editClientEmail').value.trim();
-    app.client_phone = document.getElementById('editClientPhone').value.trim();
-    app.client_fee = document.getElementById('editClientFee').value.trim();
+    if (!app.clients) app.clients = [];
+
+    // Unique Client ID
+    const clientSlug = "C" + Math.floor(1000 + Math.random() * 9000);
+    const clientKey = generateClientKey(app.package_name, clientSlug);
+
+    app.clients.push({
+      id: clientSlug,
+      name: name,
+      email: email,
+      phone: phone,
+      fee: fee,
+      is_paid: false,
+      license_key: clientKey,
+      created_at: new Date().toLocaleDateString()
+    });
 
     try {
       await uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(JSON.stringify(cachedApps, null, 2)));
-      closeModal('editModal');
-      alert("✅ క్లయింట్ వివరాలు విజయవంతంగా సేవ్ అయ్యాయి!");
+      closeModal('addClientModal');
+      alert(`✅ క్లయింట్ "${name}" విజయవంతంగా జోడించబడ్డారు!\nయూనిక్ కీ: ${clientKey}`);
       renderAppCards();
     } catch(e) {
       alert("లోపం: " + e.message);
     }
   }
 
-  // 2. రియల్ డైనమిక్ UPI QR కోడ్ జెనరేటర్
-  function openQrModal(pkgName) {
+  async function toggleClientPayment(pkg, clientId) {
+    const token = document.getElementById('ghToken').value.trim();
+    const repo = detectRepo();
+    if (!token || !repo) {
+      alert("GitHub Token నమోదు చేయండి!");
+      return;
+    }
+
+    const app = cachedApps.find(a => a.package_name === pkg);
+    if (!app || !app.clients) return;
+    const client = app.clients.find(c => c.id === clientId);
+    if (!client) return;
+
+    const newStatus = !client.is_paid;
+    if (!confirm(newStatus ? `"${client.name}" నుండి పేమెంట్ అందిందా? కీ అన్‌లాక్ చేయాలా?` : "Unpaid గా మార్చాలా?")) return;
+
+    client.is_paid = newStatus;
+    client.verified_at = newStatus ? new Date().toLocaleString() : null;
+
+    try {
+      await uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(JSON.stringify(cachedApps, null, 2)));
+      alert(newStatus ? `✅ "${client.name}" పేమెంట్ వెరిఫై అయింది! లైసెన్స్ కీ: ${client.license_key}` : "స్టేటస్ మార్చబడింది.");
+      renderAppCards();
+    } catch(e) {
+      alert("లోపం: " + e.message);
+    }
+  }
+
+  async function deleteClient(pkg, clientId) {
+    const token = document.getElementById('ghToken').value.trim();
+    const repo = detectRepo();
+    if (!confirm("ఈ క్లయింట్‌ను లెడ్జర్ నుండి తొలగించాలా?")) return;
+
+    const app = cachedApps.find(a => a.package_name === pkg);
+    if (!app || !app.clients) return;
+    app.clients = app.clients.filter(c => c.id !== clientId);
+
+    try {
+      await uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(JSON.stringify(cachedApps, null, 2)));
+      renderAppCards();
+    } catch(e) {
+      alert("లోపం: " + e.message);
+    }
+  }
+
+  function openQrForClient(appName, clientName, fee) {
     const myUpi = document.getElementById('myUpiId').value.trim();
     if (!myUpi) {
-      alert("దయచేసి పేజీ పైభాగంలో మీ UPI ID (GPay / PhonePe) నమోదు చేయండి!");
+      alert("పేజీ పైభాగంలో మీ UPI ID నమోదు చేయండి!");
       document.getElementById('myUpiId').focus();
       return;
     }
     localStorage.setItem('my_upi_id', myUpi);
 
-    const app = cachedApps.find(a => a.package_name === pkgName);
-    if (!app) return;
-
-    const amount = app.client_fee || "0";
-    const note = encodeURIComponent(`${app.name} App Dev Fee`);
-    const cName = encodeURIComponent(app.client_name || "Client");
-
-    // Standard NPCI UPI Intent Link
-    currentUpiPayLink = `upi://pay?pa=${myUpi}&pn=Developer&am=${amount}&cu=INR&tn=${note}`;
-    
-    // Google Charts API ద్వారా డైనమిక్ QR కోడ్ ఇమేజ్ సృష్టి
+    const amount = fee || "0";
+    currentUpiPayLink = `upi://pay?pa=${myUpi}&pn=Developer&am=${amount}&cu=INR&tn=${encodeURIComponent(appName + ' License Fee')}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUpiPayLink)}`;
 
     document.getElementById('qrImage').src = qrUrl;
-    document.getElementById('qrAppInfo').innerText = `యాప్: ${app.name} | క్లయింట్: ${app.client_name || 'Not set'}`;
+    document.getElementById('qrClientText').innerText = `యాప్: ${appName} | క్లయింట్: ${clientName}`;
     document.getElementById('qrAmountText').innerText = amount > 0 ? `చెల్లించాల్సిన మొత్తం: ₹ ${amount}` : "మొత్తం పేర్కొనలేదు";
     document.getElementById('qrModal').style.display = 'flex';
   }
@@ -578,61 +572,34 @@
   function copyUpiLink() {
     if (!currentUpiPayLink) return;
     navigator.clipboard.writeText(currentUpiPayLink);
-    alert("🔗 UPI పేమెంట్ లింక్ కాపీ చేయబడింది! దీన్ని క్లయింట్‌కు పంపవచ్చు.");
-  }
-
-  function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
-  }
-
-  async function togglePayment(pkgName) {
-    const token = document.getElementById('ghToken').value.trim();
-    const repo = detectRepo();
-    if (!token || !repo) {
-      alert("GitHub Token నమోదు చేయండి!");
-      return;
-    }
-
-    const app = cachedApps.find(a => a.package_name === pkgName);
-    if (!app) return;
-
-    const newStatus = !app.is_paid;
-    if (!confirm(newStatus ? `"${app.name}" కు పేమెంట్ అందిందా? లైసెన్స్ కీ అన్‌లాక్ చేయాలా?` : "Unpaid గా మార్చాలా?")) return;
-
-    app.is_paid = newStatus;
-    app.license_key = calculateKey(app.package_name);
-    app.verified_at = newStatus ? new Date().toLocaleString() : null;
-
-    try {
-      await uploadFileToGitHub(repo, token, 'apps.json', utf8ToBase64(JSON.stringify(cachedApps, null, 2)));
-      alert(newStatus ? `✅ పేమెంట్ వెరిఫై అయింది! లైసెన్స్ కీ: ${app.license_key}` : "స్టేటస్ మార్చబడింది.");
-      renderAppCards();
-    } catch (e) {
-      alert("లోపం: " + e.message);
-    }
+    alert("🔗 UPI లింక్ కాపీ చేయబడింది!");
   }
 
   function copyKey(key) {
     navigator.clipboard.writeText(key);
-    alert(`🔑 లైసెన్స్ కీ కాపీ చేయబడింది:\n\n${key}`);
+    alert(`🔑 క్లయింట్ లైసెన్స్ కీ కాపీ చేయబడింది:\n\n${key}`);
   }
 
-  function sendWhatsApp(clientPhone, appName, apkUrl, key, fee) {
-    let phone = (clientPhone || "").replace(/[^0-9]/g, '');
-    if (!phone.startsWith('91') && phone.length === 10) phone = '91' + phone;
+  function sendWhatsAppKey(phone, clientName, appName, apkUrl, key) {
+    let p = (phone || "").replace(/[^0-9]/g, '');
+    if (!p.startsWith('91') && p.length === 10) p = '91' + p;
 
-    const msg = `నమస్తే!\n\nమీ "${appName}" ఆండ్రాయిడ్ యాప్ సిద్ధమైంది.\n\n📥 APK డౌన్‌లోడ్ లింక్:\n${apkUrl}\n\n🔑 మీ లైసెన్స్ కీ:\n${key}\n\nధన్యవాదాలు!`;
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    const msg = `నమస్తే ${clientName} గారూ!\n\nమీ "${appName}" ఆండ్రాయిడ్ యాప్ సిద్ధమైంది.\n\n📥 APK డౌన్‌లోడ్ లింక్:\n${apkUrl}\n\n🔑 మీ యాక్టివేషన్ లైసెన్స్ కీ:\n${key}\n\nధన్యవాదాలు!`;
+    window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
-  function sendEmailKey(clientEmail, appName, apkUrl, key) {
-    if (!clientEmail || !clientEmail.includes('@')) {
-      alert("క్లయింట్ ఈమెయిల్ లేదు! 'Edit Details' నొక్కి ఈమెయిల్ జోడించండి.");
+  function sendEmailKey(email, clientName, appName, apkUrl, key) {
+    if (!email || !email.includes('@')) {
+      alert("క్లయింట్ ఈమెయిల్ ఐడీ లేదు!");
       return;
     }
     const subject = encodeURIComponent(`మీ ఆండ్రాయిడ్ యాప్: ${appName} - లైసెన్స్ కీ`);
-    const body = encodeURIComponent(`నమస్తే,\n\nమీ "${appName}" యాప్ సిద్ధమైంది.\n\n📥 డౌన్‌లోడ్ లింక్:\n${apkUrl}\n\n🔑 లైసెన్స్ కీ: ${key}\n\nధన్యవాదాలు!`);
-    window.open(`mailto:${clientEmail}?subject=${subject}&body=${body}`, '_blank');
+    const body = encodeURIComponent(`నమస్తే ${clientName} గారూ,\n\nమీ "${appName}" యాప్ సిద్ధమైంది.\n\n📥 డౌన్‌లోడ్ లింక్:\n${apkUrl}\n\n🔑 లైసెన్స్ కీ: ${key}\n\nధన్యవాదాలు!`);
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
   }
 
   function renderAppCards() {
@@ -645,76 +612,97 @@
     }
 
     cachedApps.slice().reverse().forEach(app => {
-      const isPaid = app.is_paid || false;
-      const key = app.license_key || calculateKey(app.package_name);
-      const cName = app.client_name || "<span style='color:var(--text-muted);'>పేర్కొనలేదు</span>";
-      const cEmail = app.client_email || "<span style='color:var(--text-muted);'>ఈమెయిల్ లేదు</span>";
-      const cPhone = app.client_phone || "<span style='color:var(--text-muted);'>ఫోన్ లేదు</span>";
-      const cFee = app.client_fee ? `₹ ${app.client_fee}` : "<span style='color:var(--text-muted);'>పేర్కొనలేదు</span>";
+      // పాత సింగిల్ క్లయింట్ డేటా ఉంటే ఆటోమేటిక్‌గా clients అర్రే లోకి మైగ్రేట్ చేయడం
+      if (!app.clients || !Array.isArray(app.clients)) {
+        app.clients = [];
+        if (app.client_name || app.license_key) {
+          app.clients.push({
+            id: "C1001",
+            name: app.client_name || "Client 1",
+            email: app.client_email || "",
+            phone: app.client_phone || "",
+            fee: app.client_fee || "",
+            is_paid: app.is_paid || false,
+            license_key: app.license_key || generateClientKey(app.package_name, "C1001"),
+            created_at: new Date(app.updated_at).toLocaleDateString()
+          });
+        }
+      }
+
+      let clientsHtml = '';
+      if (app.clients.length === 0) {
+        clientsHtml = '<div style="color:var(--text-muted); font-size:12px; padding:10px; background:#080d1a; border-radius:6px;">ఈ యాప్‌కు ఇంకా ఏ క్లయింట్‌నూ జోడించలేదు. "+ Add Client" నొక్కి క్లయింట్‌లను జోడించండి.</div>';
+      } else {
+        app.clients.forEach(c => {
+          clientsHtml += `
+            <div class="client-item-card">
+              <div class="client-row">
+                <div>
+                  <strong style="color:#fff;">${c.name}</strong> 
+                  <span class="badge ${c.is_paid ? 'badge-paid' : 'badge-unpaid'}" style="margin-left:6px;">
+                    ${c.is_paid ? '✅ Paid' : '⏳ Unpaid'}
+                  </span>
+                </div>
+                <div class="btn-group">
+                  <button class="btn-verify" onclick="toggleClientPayment('${app.package_name}', '${c.id}')">
+                    ${c.is_paid ? 'Mark Unpaid' : '💰 Verify Payment'}
+                  </button>
+                  <button style="background:#8b5cf6;" onclick="openQrForClient('${app.name}', '${c.name}', '${c.fee}')">📲 QR</button>
+                  ${c.is_paid ? `
+                    <button class="btn-copy" onclick="copyKey('${c.license_key}')">📋 Copy</button>
+                    <button class="btn-mail" onclick="sendEmailKey('${c.email}', '${c.name}', '${app.name}', '${app.apk_url}', '${c.license_key}')">📧 Mail</button>
+                    <button class="btn-whatsapp" onclick="sendWhatsAppKey('${c.phone}', '${c.name}', '${app.name}', '${app.apk_url}', '${c.license_key}')">📲 WhatsApp</button>
+                  ` : ''}
+                  <button class="btn-del" onclick="deleteClient('${app.package_name}', '${c.id}')">🗑️</button>
+                </div>
+              </div>
+
+              <div class="client-details-grid">
+                <div>
+                  <div class="info-label">📧 ఈమెయిల్</div>
+                  <div class="info-value">${c.email || 'లేదు'}</div>
+                </div>
+                <div>
+                  <div class="info-label">📞 ఫోన్</div>
+                  <div class="info-value">${c.phone || 'లేదు'}</div>
+                </div>
+                <div>
+                  <div class="info-label">💰 ఫీజు</div>
+                  <div class="info-value" style="color:#38bdf8;">${c.fee ? '₹ '+c.fee : 'లేదు'}</div>
+                </div>
+                <div>
+                  <div class="info-label">🔑 లైసెన్స్ కీ</div>
+                  <div class="info-value">
+                    ${c.is_paid ? `<span class="key-badge">${c.license_key}</span>` : '<span style="color:#ef4444;">🔒 లాక్ చేయబడింది</span>'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      }
 
       list.innerHTML += `
-        <div class="client-card">
-          <div class="client-header">
+        <div class="app-card">
+          <div class="app-header">
             <div>
-              <strong style="font-size:16px; color:#fff;">${app.name}</strong>
+              <strong style="font-size:17px; color:#fff;">${app.name}</strong>
               <span style="color:var(--accent); font-size:12px; margin-left:6px;">v${app.version}</span>
-              <span class="badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}" style="margin-left:8px;">
-                ${isPaid ? '✅ Paid & Verified' : '⏳ Unpaid (Locked)'}
-              </span>
               <br>
               <small style="color:var(--text-muted); font-family:monospace;">${app.package_name}</small>
             </div>
             <div class="btn-group">
-              <button class="btn-edit" onclick="openEditModal('${app.package_name}')">✏️ Edit Details</button>
-              <button class="btn-qr" onclick="openQrModal('${app.package_name}')">📲 UPI QR</button>
+              <button class="btn-add-client" onclick="openAddClientModal('${app.package_name}')">➕ Add Client</button>
               <a href="${app.apk_url}" target="_blank">📥 APK</a>
               <a href="${app.aab_url}" target="_blank" class="aab">📦 AAB</a>
             </div>
           </div>
 
-          <!-- Client Ledger Details Grid -->
-          <div class="client-info-table">
-            <div>
-              <div class="info-label">👤 క్లయింట్ పేరు</div>
-              <div class="info-value">${cName}</div>
-            </div>
-            <div>
-              <div class="info-label">📧 ఈమెయిల్</div>
-              <div class="info-value">${cEmail}</div>
-            </div>
-            <div>
-              <div class="info-label">📞 ఫోన్ / వాట్సాప్</div>
-              <div class="info-value">${cPhone}</div>
-            </div>
-            <div>
-              <div class="info-label">💰 ఫీజు అమౌంట్</div>
-              <div class="info-value" style="color:#38bdf8;">${cFee}</div>
-            </div>
+          <div style="font-size:13px; font-weight:bold; color:var(--accent);">
+            👥 ఈ యాప్‌ను కొనుగోలు చేసిన క్లయింట్లు (${app.clients.length}):
           </div>
-
-          <!-- License Key Box -->
-          <div class="key-display-box">
-            <div>
-              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:bold;">
-                🔑 లైసెన్స్ కీ:
-              </div>
-              <div style="margin-top:4px;">
-                ${isPaid 
-                  ? `<span class="key-code">${key}</span>` 
-                  : '<span style="color:var(--danger); font-size:13px; font-weight:bold;">🔒 పేమెంట్ వెరిఫై చేసేంతవరకు లాక్ చేయబడింది</span>'}
-              </div>
-            </div>
-
-            <div class="btn-group">
-              <button class="btn-verify" onclick="togglePayment('${app.package_name}')">
-                ${isPaid ? 'Mark Unpaid' : '💰 Verify Payment'}
-              </button>
-              ${isPaid ? `
-                <button class="btn-copy" onclick="copyKey('${key}')">📋 Copy Key</button>
-                <button class="btn-mail" onclick="sendEmailKey('${app.client_email}', '${app.name}', '${app.apk_url}', '${key}')">📧 Email</button>
-                <button class="btn-whatsapp" onclick="sendWhatsApp('${app.client_phone}', '${app.name}', '${app.apk_url}', '${key}')">📲 WhatsApp</button>
-              ` : ''}
-            </div>
+          <div class="client-list-container">
+            ${clientsHtml}
           </div>
         </div>
       `;
@@ -730,7 +718,7 @@
       cachedApps = await res.json();
       renderAppCards();
     } catch(e) {
-      console.log("apps.json ఇంకా రాలేదు.");
+      console.log("apps.json లోడ్ అవ్వలేదు.");
     }
   }
 
@@ -751,8 +739,6 @@
     const name = document.getElementById('appName').value.trim();
     let rawPkg = document.getElementById('pkgName').value.trim().toLowerCase();
     const pkg = rawPkg.replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '');
-    const vName = document.getElementById('vName').value.trim();
-    const vCode = parseInt(document.getElementById('vCode').value) || 1;
     const sourceType = document.getElementById('sourceType').value;
 
     if (!name || !pkg) {
@@ -761,7 +747,7 @@
     }
 
     const buildBtn = document.querySelector('.build-btn');
-    buildBtn.innerText = "⏳ ప్రాసెస్ అవుతోంది...";
+    buildBtn.innerText = "⏳ బిల్డ్ ప్రాసెస్ ప్రారంభమవుతోంది...";
     buildBtn.disabled = true;
 
     try {
@@ -788,25 +774,19 @@
         app_name: name,
         app_slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         package_name: pkg,
-        version_name: vName,
-        version_code: vCode,
+        version_name: "1.0.0",
+        version_code: 1,
         source_type: sourceType,
         web_url: document.getElementById('webUrl').value.trim(),
-        client_name: document.getElementById('clientName').value.trim(),
-        client_email: document.getElementById('clientEmail').value.trim(),
-        client_phone: document.getElementById('clientPhone').value.trim(),
-        client_fee: document.getElementById('clientFee').value.trim(),
         has_custom_html: hasCustomHtml,
         has_custom_zip: hasCustomZip,
         has_custom_icon: hasCustomIcon,
         orientation: "unspecified",
         cleartext: true,
         permissions: {
-          internet: document.getElementById('permInternet').checked,
-          camera: document.getElementById('permCamera').checked,
-          fine_location: document.getElementById('permFineLocation').checked,
-          storage: document.getElementById('permStorage').checked,
-          notifications: document.getElementById('permNotifications').checked
+          internet: true,
+          storage: true,
+          notifications: true
         }
       };
 
@@ -825,7 +805,7 @@
     } catch(e) {
       alert("లోపం: " + e.message);
     } finally {
-      buildBtn.innerText = "⚡ Build Release APK & AAB Now";
+      buildBtn.innerText = "⚡ Build Master App (APK & AAB)";
       buildBtn.disabled = false;
     }
   }
