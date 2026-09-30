@@ -86,7 +86,7 @@ jobs:
 
           npx cap add android
 
-      - name: Force Pure Native In-App Engine with Unbypassable License Lock
+      - name: Build Crash-Proof Enterprise Security Lock
         run: |
           cd workspace
 
@@ -112,31 +112,28 @@ jobs:
           import android.widget.LinearLayout;
           import android.widget.TextView;
           import android.widget.Toast;
-          import android.webkit.WebView;
-          import android.webkit.WebViewClient;
-          import android.webkit.WebSettings;
-          import android.webkit.WebChromeClient;
-          import android.content.Intent;
-          import android.net.Uri;
-          import androidx.appcompat.app.AppCompatActivity;
+          import android.app.Dialog;
+          import android.content.DialogInterface;
+          import android.view.KeyEvent;
+          import com.getcapacitor.BridgeActivity;
 
-          public class MainActivity extends AppCompatActivity {
-              private WebView webView;
+          public class MainActivity extends BridgeActivity {
               private static final String PREFS_NAME = "EnterpriseAppSecurityPrefs";
               private static final String KEY_IS_UNLOCKED = "client_app_unlocked_status";
               private static final String APP_PKG = "${PKG_NAME}";
+              private Dialog lockDialog;
 
               @Override
-              protected void onCreate(Bundle savedInstanceState) {
+              public void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
 
                   SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
                   boolean isUnlocked = prefs.getBoolean(KEY_IS_UNLOCKED, false);
 
-                  if (isUnlocked) {
-                      launchClientApplication();
+                  if (!isUnlocked) {
+                      showStrictLockDialog();
                   } else {
-                      enforceSecurityLockScreen();
+                      handleRedirection();
                   }
               }
 
@@ -161,11 +158,26 @@ jobs:
                   return providedHex.equalsIgnoreCase(expectedHex);
               }
 
-              private void enforceSecurityLockScreen() {
+              private void showStrictLockDialog() {
+                  lockDialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+                  lockDialog.setCancelable(false);
+                  lockDialog.setCanceledOnTouchOutside(false);
+
+                  lockDialog.setOnKeyListener(new DialogInterface.OnKeyListener() {
+                      @Override
+                      public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                          if (keyCode == KeyEvent.KEYCODE_BACK) {
+                              finishAffinity();
+                              return true;
+                          }
+                          return false;
+                      }
+                  });
+
                   LinearLayout root = new LinearLayout(this);
                   root.setOrientation(LinearLayout.VERTICAL);
                   root.setGravity(Gravity.CENTER);
-                  root.setPadding(70, 70, 70, 70);
+                  root.setPadding(60, 60, 60, 60);
                   root.setBackgroundColor(Color.parseColor("#0b0f19"));
                   root.setLayoutParams(new ViewGroup.LayoutParams(
                       ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -227,71 +239,36 @@ jobs:
                                   .putBoolean(KEY_IS_UNLOCKED, true)
                                   .apply();
                               Toast.makeText(MainActivity.this, "✅ Activation Successful!", Toast.LENGTH_SHORT).show();
-                              launchClientApplication();
+                              if (lockDialog != null && lockDialog.isShowing()) {
+                                  lockDialog.dismiss();
+                              }
+                              handleRedirection();
                           } else {
-                              Toast.makeText(MainActivity.this, "❌ Invalid License Key! Please enter the key provided by developer.", Toast.LENGTH_LONG).show();
+                              Toast.makeText(MainActivity.this, "❌ Invalid License Key! Please verify.", Toast.LENGTH_LONG).show();
                           }
                       }
                   });
                   root.addView(btnActivate);
 
-                  setContentView(root);
+                  lockDialog.setContentView(root);
+                  lockDialog.show();
               }
 
-              private void launchClientApplication() {
-                  webView = new WebView(this);
-                  webView.setLayoutParams(new ViewGroup.LayoutParams(
-                      ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                  setContentView(webView);
-
-                  WebSettings s = webView.getSettings();
-                  s.setJavaScriptEnabled(true);
-                  s.setDomStorageEnabled(true);
-                  s.setDatabaseEnabled(true);
-                  s.setAllowFileAccess(true);
-                  s.setLoadsImagesAutomatically(true);
-                  s.setUseWideViewPort(true);
-                  s.setLoadWithOverviewMode(true);
-                  s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-                  s.setUserAgentString(s.getUserAgentString() + " EnterpriseSecureApp/1.0");
-
-                  webView.setWebChromeClient(new WebChromeClient());
-                  webView.setWebViewClient(new WebViewClient() {
-                      @Override
-                      public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                          if (url.startsWith("http://") || url.startsWith("https://")) {
-                              view.loadUrl(url);
-                              return true;
-                          }
-                          try {
-                              Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                              startActivity(intent);
-                              return true;
-                          } catch (Exception e) {
-                              return true;
-                          }
+              private void handleRedirection() {
+                  if ("${SOURCE_TYPE}".equals("url") && !"${TARGET_URL}".isEmpty()) {
+                      if (getBridge() != null && getBridge().getWebView() != null) {
+                          getBridge().getWebView().post(new Runnable() {
+                              @Override
+                              public void run() {
+                                  getBridge().getWebView().loadUrl("${TARGET_URL}");
+                              }
+                          });
                       }
-                  });
-
-                  if ("${SOURCE_TYPE}".equals("url")) {
-                      webView.loadUrl("${TARGET_URL}");
-                  } else {
-                      webView.loadUrl("file:///android_asset/public/index.html");
-                  }
-              }
-
-              @Override
-              public void onBackPressed() {
-                  if (webView != null && webView.canGoBack()) {
-                      webView.goBack();
-                  } else {
-                      super.onBackPressed();
                   }
               }
           }
           EOF
 
-          # Sed/Replace variables dynamically into MainActivity.java
           sed -i "s/\${PKG_NAME}/$PKG_NAME/g" "$TARGET_FILE"
           sed -i "s/\${APP_NAME}/$APP_NAME/g" "$TARGET_FILE"
           sed -i "s/\${SOURCE_TYPE}/$SOURCE_TYPE/g" "$TARGET_FILE"
