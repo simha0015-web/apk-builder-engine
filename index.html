@@ -17,6 +17,7 @@
       --success: #10b981;
       --danger: #ef4444;
       --purple: #8b5cf6;
+      --warning: #f59e0b;
     }
     body { 
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -171,6 +172,7 @@
       cursor: pointer; 
     }
     .btn-group a.aab { background: #7c3aed; }
+    .btn-group button.btn-update { background: #f59e0b !important; color: #000 !important; }
     .btn-whatsapp { background: #25d366 !important; color: #000 !important; }
     .btn-mail { background: #ea4335 !important; color: white !important; }
     .btn-verify { background: #0284c7 !important; color: white !important; }
@@ -225,7 +227,7 @@
 <div class="container">
   <div class="header">
     <h1>🚀 Android Cloud App Studio & Global Client CRM</h1>
-    <p>యాప్ నిర్మాణం, ఆటోమేటిక్ పేమెంట్ ఇన్వాయిస్ & లైసెన్స్ మేనేజ్‌మెంట్</p>
+    <p>యాప్ నిర్మాణం, అప్‌డేట్ మేనేజ్‌మెంట్ & ఆటోమేటిక్ లైసెన్సింగ్</p>
   </div>
 
   <div class="card">
@@ -244,7 +246,7 @@
   </div>
 
   <div class="card" id="appFormCard">
-    <h2>📱 యాప్ క్రియేషన్ (Master App Builder)</h2>
+    <h2>📱 యాప్ క్రియేషన్ & అప్‌డేట్ (Master App Builder)</h2>
     <div class="grid">
       <div>
         <label>App Name:</label>
@@ -253,6 +255,17 @@
       <div>
         <label>Package Name (Application ID):</label>
         <input type="text" id="pkgName" placeholder="com.company.multiapp">
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label>Version Name:</label>
+        <input type="text" id="vName" value="1.0.0">
+      </div>
+      <div>
+        <label>Version Code:</label>
+        <input type="number" id="vCode" value="1">
       </div>
     </div>
     
@@ -387,7 +400,7 @@
   </div>
 </div>
 
-<!-- Modal 3: Secure UPI QR Code (కేవలం QR మాత్రమే) -->
+<!-- Modal 3: Secure UPI QR Code -->
 <div id="qrModal" class="modal-overlay">
   <div class="modal-content" style="text-align:center;">
     <h3 style="margin-top:0; color:var(--accent);">📲 UPI పేమెంట్ QR కోడ్</h3>
@@ -404,7 +417,6 @@
 </div>
 
 <script>
-  // మీ సీక్రెట్ UPI ID (కోడ్ లోపలే సురక్షితం)
   const SECURE_UPI_ID = "8050166319@ybl";
 
   let zipBase64 = "";
@@ -511,6 +523,41 @@
     });
     if (!res.ok) throw new Error("GitHub లో డేటా సేవ్ కాలేదు. PAT Token సరైనదేనా చెక్ చేసుకోండి.");
   }
+
+  // యాప్ అప్‌డేట్ ఆప్షన్ ఫంక్షన్
+  window.prepareUpdateApp = function(pkg) {
+    const app = cachedApps.find(a => a.package_name === pkg);
+    if (!app) return;
+
+    document.getElementById('appName').value = app.name || '';
+    document.getElementById('pkgName').value = app.package_name || '';
+
+    // Version Code ఆటోమేటిక్‌గా 1 ఇంక్రిమెంట్ అవుతుంది
+    const currentCode = parseInt(app.version_code) || 1;
+    document.getElementById('vCode').value = currentCode + 1;
+
+    // Version Name ప్యాచ్ ఆటోమేటిక్‌గా అప్‌గ్రేడ్ అవుతుంది
+    const vParts = (app.version || "1.0.0").split('.');
+    if (vParts.length === 3 && !isNaN(vParts[2])) {
+      vParts[2] = parseInt(vParts[2]) + 1;
+      document.getElementById('vName').value = vParts.join('.');
+    } else {
+      document.getElementById('vName').value = app.version + ".1";
+    }
+
+    if (app.source_type) {
+      document.getElementById('sourceType').value = app.source_type;
+      toggleSource();
+    }
+
+    if (app.web_url) {
+      document.getElementById('webUrl').value = app.web_url;
+    }
+
+    // ఫారమ్ పైకి స్మూత్ స్క్రోలింగ్
+    document.getElementById('appFormCard').scrollIntoView({ behavior: 'smooth' });
+    alert(`🔄 "${app.name}" వివరాలు లోడ్ అయ్యాయి!\n\nVersion Code: ${currentCode + 1} కి మారింది.\nమీరు కొత్త కోడ్/ఫైల్స్ జతచేసి నేరుగా "Build Master App" నొక్కండి.`);
+  };
 
   window.openAddClientModal = function(pkg) {
     const modal = document.getElementById('addClientModal');
@@ -620,7 +667,6 @@
     }
   };
 
-  // WhatsApp పేమెంట్ ఇన్వాయిస్ (డైరెక్ట్ UPI లింక్ లేకుండా కేవలం QR కోడ్ వ్యూయర్ లింక్)
   function sendPaymentInviteWhatsApp(phone, clientName, appName, fee, currency) {
     let p = (phone || "").replace(/[^0-9]/g, '');
     const isUSD = (currency === 'USD');
@@ -641,7 +687,6 @@
     window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
-  // Email పేమెంట్ ఇన్వాయిస్
   function sendPaymentInviteEmail(email, clientName, appName, fee, currency) {
     if (!email || !email.includes('@')) {
       alert("Client email is missing! Please click 'Edit' to add an email address.");
@@ -711,7 +756,6 @@ Development Team`
     }
   }
 
-  // ప్రొఫెషనల్ ఇంగ్లీష్ డౌన్‌లోడ్ గైడ్‌తో కూడిన ఈమెయిల్ టెంప్లేట్
   function sendKeyEmail(email, clientName, appName, apkUrl, key) {
     if (!email || !email.includes('@')) {
       alert("Client email is missing! Please click 'Edit' to add an email address.");
@@ -749,7 +793,6 @@ Development Team`
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
   }
 
-  // ప్రొఫెషనల్ ఇంగ్లీష్ వాట్సాప్ టెంప్లేట్
   function sendKeyWhatsApp(phone, clientName, appName, apkUrl, key) {
     let p = (phone || "").replace(/[^0-9]/g, '');
     const msg = `Hello ${clientName}!\n\nYour payment has been received. Thank you!\n\nYour Android app "${appName}" is ready.\n\n📥 APK Download Link:\n${apkUrl}\n\n🔑 Activation License Key:\n${key}\n\n⚠️ NOTE: When opening the link, tap the three dots ( ⋮ ) at the top-right and choose "Open in Chrome" for a smooth download. Install the APK and enter your license key to activate!`;
@@ -821,7 +864,7 @@ Development Team`
 
       let clientsHtml = '';
       if (app.clients.length === 0) {
-        clientsHtml = '<div style="color:var(--text-muted); font-size:12px; padding:10px; background:#080d1a; border-radius:6px;">ఈ యాప్‌కు ఇంకా ఏ క్లయింట్‌నూ జోడించలేదు. "+ Add Client" బటన్ నొక్కి క్లయింట్‌ను నమోదు చేయండి.</div>';
+        clientsHtml = '<div style="color:var(--text-muted); font-size:12px; padding:10px; background:#080d1a; border-radius:6px;">ఈ యాప్‌కు ఇంకా ఏ క్లయింట్‌‌నూ జోడించలేదు. "+ Add Client" బటన్ నొక్కి క్లయింట్‌ను నమోదు చేయండి.</div>';
       } else {
         app.clients.forEach(c => {
           const isPaid = c.is_paid || false;
@@ -888,11 +931,12 @@ Development Team`
           <div class="app-header">
             <div>
               <strong style="font-size:17px; color:#fff;">${app.name}</strong>
-              <span style="color:var(--accent); font-size:12px; margin-left:6px;">v${app.version}</span>
+              <span style="color:var(--accent); font-size:12px; margin-left:6px;">v${app.version} (Code: ${app.version_code || 1})</span>
               <br>
               <small style="color:var(--text-muted); font-family:monospace;">${app.package_name}</small>
             </div>
             <div class="btn-group">
+              <button type="button" class="btn-update" onclick="prepareUpdateApp('${app.package_name}')">🔄 Update App</button>
               <button type="button" class="btn-add-client" onclick="openAddClientModal('${app.package_name}')">➕ Add Client</button>
               <a href="${app.apk_url}" target="_blank">📥 APK</a>
               <a href="${app.aab_url}" target="_blank" class="aab">📦 AAB</a>
@@ -940,6 +984,8 @@ Development Team`
     const name = document.getElementById('appName').value.trim();
     let rawPkg = document.getElementById('pkgName').value.trim().toLowerCase();
     const pkg = rawPkg.replace(/\s+/g, '').replace(/[^a-z0-9._]/g, '');
+    const vName = document.getElementById('vName').value.trim();
+    const vCode = parseInt(document.getElementById('vCode').value) || 1;
     const sourceType = document.getElementById('sourceType').value;
 
     if (!name || !pkg) {
@@ -975,8 +1021,8 @@ Development Team`
         app_name: name,
         app_slug: name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         package_name: pkg,
-        version_name: "1.0.0",
-        version_code: 1,
+        version_name: vName,
+        version_code: vCode,
         source_type: sourceType,
         web_url: document.getElementById('webUrl').value.trim(),
         has_custom_html: hasCustomHtml,
