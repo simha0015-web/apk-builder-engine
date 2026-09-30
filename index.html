@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="te">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -225,11 +225,11 @@
 <div class="container">
   <div class="header">
     <h1>🚀 Android Cloud App Studio & Global Client CRM</h1>
-    <p>దేశీయ (UPI) & అంతర్జాతీయ (USD/PayPal) క్లయింట్ పేమెంట్స్ మరియు లైసెన్స్ మేనేజ్‌మెంట్</p>
+    <p>యాప్ నిర్మాణం, ఆటోమేటిక్ పేమెంట్ ఇన్వాయిస్ & లైసెన్స్ మేనేజ్‌మెంట్</p>
   </div>
 
   <div class="card">
-    <h2>🔑 అడ్మిన్ & ఇంటర్నేషనల్ పేమెంట్ సెటప్</h2>
+    <h2>🔑 అడ్మిన్ & ఇంటర్నేషనల్ సెటప్</h2>
     <div class="grid">
       <div>
         <label>GitHub Personal Access Token (PAT):</label>
@@ -316,7 +316,7 @@
   </div>
 </div>
 
-<!-- Modal 1: Add New Client (Currency Selection) -->
+<!-- Modal 1: Add New Client -->
 <div id="addClientModal" class="modal-overlay">
   <div class="modal-content">
     <h3 style="margin-top:0; color:var(--accent);">➕ కొత్త క్లయింట్‌ను జోడించండి</h3>
@@ -334,7 +334,7 @@
       </div>
       <div>
         <label>ఫీజు అమౌంట్ (Fee):</label>
-        <input type="number" id="newClientFee" placeholder="5000 (INR) లేదా 60 (USD)">
+        <input type="number" id="newClientFee" placeholder="5000 లేదా 60">
       </div>
     </div>
 
@@ -387,7 +387,7 @@
   </div>
 </div>
 
-<!-- Modal 3: Secure UPI QR Code (కేవలం దేశీయ క్లయింట్లకు) -->
+<!-- Modal 3: Secure UPI QR Code (కేవలం QR మాత్రమే) -->
 <div id="qrModal" class="modal-overlay">
   <div class="modal-content" style="text-align:center;">
     <h3 style="margin-top:0; color:var(--accent);">📲 UPI పేమెంట్ QR కోడ్</h3>
@@ -396,7 +396,7 @@
       <img id="qrImage" src="" alt="UPI QR Code" style="width:200px; height:200px; display:block;">
     </div>
     <div id="qrAmountText" style="font-size:18px; font-weight:bold; color:#10b981; margin-top:12px;"></div>
-    <p style="font-size:12px; color:var(--text-muted); margin-top:6px;">పేమెంట్ పూర్తయిన తర్వాత డ్యాష్‌బోర్డ్‌లో <b>Verify</b> నొక్కగానే కీ జెనరేట్ అయి క్లయింట్ మెయిల్‌కు వెళ్తుంది.</p>
+    <p style="font-size:12px; color:var(--text-muted); margin-top:6px;">Google Pay, PhonePe, Paytm ద్వారా స్కాన్ చేసి పే చేయవచ్చు.</p>
     <div style="margin-top:15px;">
       <button type="button" onclick="closeModal('qrModal')" style="background:#475569; color:#fff; border:none; padding:10px 24px; border-radius:6px; cursor:pointer;">క్లోజ్</button>
     </div>
@@ -404,6 +404,7 @@
 </div>
 
 <script>
+  // మీ సీక్రెట్ UPI ID (కోడ్ లోపలే సురక్షితం)
   const SECURE_UPI_ID = "8050166319@ybl";
 
   let zipBase64 = "";
@@ -619,7 +620,7 @@
     }
   };
 
-  // గ్లోబల్ & డొమెస్టిక్ WhatsApp ఇన్వాయిస్ పంపడం
+  // WhatsApp పేమెంట్ ఇన్వాయిస్ (డైరెక్ట్ UPI లింక్ లేకుండా కేవలం QR కోడ్ వ్యూయర్ లింక్)
   function sendPaymentInviteWhatsApp(phone, clientName, appName, fee, currency) {
     let p = (phone || "").replace(/[^0-9]/g, '');
     const isUSD = (currency === 'USD');
@@ -628,11 +629,11 @@
 
     if (isUSD) {
       const intlLink = localStorage.getItem('intl_pay_link') || 'https://paypal.me';
-      payText = `💳 International Payment Link (PayPal / Cards):\n${intlLink}/${fee || ''}`;
+      payText = `💳 Secure Payment Link (PayPal / Cards):\n${intlLink}/${fee || ''}`;
     } else {
       const payIntent = `upi://pay?pa=${SECURE_UPI_ID}&pn=AppDeveloper&am=${fee || 0}&cu=INR&tn=${encodeURIComponent(appName + ' Fee')}`;
       const qrImgLink = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(payIntent)}`;
-      payText = `📲 Scan QR to Pay via GPay/PhonePe:\n${qrImgLink}`;
+      payText = `📲 Open Link to Scan Payment QR Code:\n${qrImgLink}`;
     }
 
     const msg = `Hello ${clientName},\n\nYour Android App "${appName}" is ready!\n\n💰 Fee: ${symbol} ${fee || '0'}\n\n${payText}\n\nOnce the payment is completed, your App APK download link and Activation License Key will be delivered instantly to your email. Thank you!`;
@@ -640,10 +641,10 @@
     window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
-  // గ్లోబల్ & డొమెస్టిక్ Email ఇన్వాయిస్ పంపడం
+  // Email పేమెంట్ ఇన్వాయిస్
   function sendPaymentInviteEmail(email, clientName, appName, fee, currency) {
     if (!email || !email.includes('@')) {
-      alert("క్లయింట్ ఈమెయిల్ లేదు! 'Edit' నొక్కి ఈమెయిల్ జోడించండి.");
+      alert("Client email is missing! Please click 'Edit' to add an email address.");
       return;
     }
 
@@ -657,7 +658,7 @@
     } else {
       const payIntent = `upi://pay?pa=${SECURE_UPI_ID}&pn=AppDeveloper&am=${fee || 0}&cu=INR&tn=${encodeURIComponent(appName + ' Fee')}`;
       const qrImgLink = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(payIntent)}`;
-      payDetails = `📲 Scan QR Code via Google Pay / PhonePe:\n${qrImgLink}`;
+      payDetails = `📲 Open Link to Scan Payment QR Code (GPay/PhonePe):\n${qrImgLink}`;
     }
 
     const subject = encodeURIComponent(`Invoice & Payment Details: ${appName} Android App`);
@@ -710,31 +711,36 @@ Development Team`
     }
   }
 
+  // ప్రొఫెషనల్ ఇంగ్లీష్ డౌన్‌లోడ్ గైడ్‌తో కూడిన ఈమెయిల్ టెంప్లేట్
   function sendKeyEmail(email, clientName, appName, apkUrl, key) {
     if (!email || !email.includes('@')) {
-      alert("ఈ క్లయింట్‌కు ఈమెయిల్ ఐడీ లేదు!");
+      alert("Client email is missing! Please click 'Edit' to add an email address.");
       return;
     }
     const subject = encodeURIComponent(`🎉 Your App License Key & Download Link: ${appName}`);
     const body = encodeURIComponent(
 `Hello ${clientName},
 
-Thank you! We have verified your payment successfully.
+Thank you! We have successfully verified your payment.
 
-Here are your application and activation license details:
+Here are your application download and activation details:
 
 📥 APK Download Link:
 ${apkUrl}
 
-🔑 Your Permanent Activation License Key:
+🔑 Permanent Activation License Key:
 ${key}
 
-Activation Instructions:
-1. Download and install the APK on your Android device from the link above.
-2. Open the app, paste your License Key, and tap 'Activate App'.
-3. Your app will unlock permanently.
+--------------------------------------------------
+⚠️ IMPORTANT DOWNLOAD & INSTALLATION GUIDE:
+--------------------------------------------------
+1. Tap the download link above to open it.
+2. If it opens inside an in-app viewer and the download gets stuck, tap the three dots ( ⋮ ) in the top-right corner of the screen and select "Open in Chrome" (or "Open in Browser").
+3. Once the download completes, tap the APK file and select "Install".
+4. Open the installed application, enter your License Key provided above, and tap "Activate App".
+5. Your application will unlock permanently.
 
-Feel free to reach out if you need any assistance.
+If you require any assistance, feel free to reply directly to this email.
 
 Best regards,
 Development Team`
@@ -743,9 +749,10 @@ Development Team`
     window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
   }
 
+  // ప్రొఫెషనల్ ఇంగ్లీష్ వాట్సాప్ టెంప్లేట్
   function sendKeyWhatsApp(phone, clientName, appName, apkUrl, key) {
     let p = (phone || "").replace(/[^0-9]/g, '');
-    const msg = `Hello ${clientName}!\n\nYour payment has been received. Thank you!\n\n📥 APK Download Link:\n${apkUrl}\n\n🔑 Your Activation License Key:\n${key}\n\nInstall the APK and enter this key to unlock your app!`;
+    const msg = `Hello ${clientName}!\n\nYour payment has been received. Thank you!\n\nYour Android app "${appName}" is ready.\n\n📥 APK Download Link:\n${apkUrl}\n\n🔑 Activation License Key:\n${key}\n\n⚠️ NOTE: When opening the link, tap the three dots ( ⋮ ) at the top-right and choose "Open in Chrome" for a smooth download. Install the APK and enter your license key to activate!`;
     window.open(`https://wa.me/${p}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
@@ -796,7 +803,21 @@ Development Team`
     }
 
     cachedApps.slice().reverse().forEach(app => {
-      if (!app.clients || !Array.isArray(app.clients)) app.clients = [];
+      if (!app.clients || !Array.isArray(app.clients)) {
+        app.clients = [];
+        if (app.client_name || app.license_key) {
+          app.clients.push({
+            id: "C1001",
+            name: app.client_name || "Client 1",
+            email: app.client_email || "",
+            phone: app.client_phone || "",
+            fee: app.client_fee || "",
+            is_paid: app.is_paid || false,
+            license_key: app.license_key || generateClientKey(app.package_name, "C1001"),
+            created_at: new Date().toLocaleDateString()
+          });
+        }
+      }
 
       let clientsHtml = '';
       if (app.clients.length === 0) {
