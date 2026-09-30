@@ -10,7 +10,19 @@
     "updated_at": "2026-09-28T07:22:59.017Z",
     "license_key": "KEY-2C4A52B6",
     "is_paid": true,
-    "verified_at": "30/09/2026, 11:22:28"
+    "verified_at": "30/09/2026, 11:22:28",
+    "clients": [
+      {
+        "id": "C1001",
+        "name": "Client 1",
+        "email": "simha0015@gmail.com",
+        "phone": "",
+        "fee": "500",
+        "is_paid": true,
+        "license_key": "KEY-2C4A52B6",
+        "created_at": "30/09/2026"
+      }
+    ]
   },
   {
     "name": "Exhaust & RTU",
@@ -21,7 +33,19 @@
     "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v2/exhaust---rtu-debug.apk",
     "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-exhaust---rtu-v2/exhaust---rtu-release.aab",
     "updated_at": "2026-09-29T09:22:13.516Z",
-    "license_key": "KEY-2551AE73"
+    "license_key": "KEY-2551AE73",
+    "clients": [
+      {
+        "id": "C1001",
+        "name": "Client 1",
+        "email": "",
+        "phone": "",
+        "fee": "",
+        "is_paid": false,
+        "license_key": "KEY-2551AE73",
+        "created_at": "30/09/2026"
+      }
+    ]
   },
   {
     "name": "My finance manager",
@@ -32,7 +56,19 @@
     "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-my-finance-manager-v1/my-finance-manager-debug.apk",
     "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-my-finance-manager-v1/my-finance-manager-release.aab",
     "updated_at": "2026-09-29T11:02:32.913Z",
-    "license_key": "KEY-5A6E4B20"
+    "license_key": "KEY-5A6E4B20",
+    "clients": [
+      {
+        "id": "C1001",
+        "name": "Client 1",
+        "email": "",
+        "phone": "",
+        "fee": "",
+        "is_paid": false,
+        "license_key": "KEY-5A6E4B20",
+        "created_at": "30/09/2026"
+      }
+    ]
   },
   {
     "name": "Narasimha Attendance",
@@ -43,6 +79,18 @@
     "apk_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-narasimha-attendance-v1/narasimha-attendance-debug.apk",
     "aab_url": "https://github.com/simha0015-web/apk-builder-engine/releases/download/release-narasimha-attendance-v1/narasimha-attendance-release.aab",
     "updated_at": "2026-09-29T11:56:20.150Z",
-    "license_key": "KEY-2A9751AB"
+    "license_key": "KEY-2A9751AB",
+    "clients": [
+      {
+        "id": "C1001",
+        "name": "Client 1",
+        "email": "",
+        "phone": "",
+        "fee": "",
+        "is_paid": false,
+        "license_key": "KEY-2A9751AB",
+        "created_at": "30/09/2026"
+      }
+    ]
   }
 ]
